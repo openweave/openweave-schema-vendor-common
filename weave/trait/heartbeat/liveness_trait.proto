@@ -1,0 +1,184 @@
+/*
+ *
+ *    Copyright (c) 2019 Google LLC.
+ *    Copyright (c) 2016-2018 Nest Labs, Inc.
+ *    All rights reserved.
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
+
+/**
+ *    @file
+ *      This file specifies a Weave Common trait that expresses the
+ *      liveness of the connectivity of a resource relative to
+ *      another.
+ *
+ */
+
+syntax = "proto3";
+package weave.trait.heartbeat;
+
+import "wdl/wdl_options.proto";
+import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+
+option java_outer_classname = "WeaveInternalLivenessTrait";
+option objc_class_prefix = "SCM";
+
+/**
+ * Liveness trait
+ * Expresses the liveness of the connectivity of a device relative to another device or service
+ * In most cases the connectivity status is based on the mutual subscription message traffic
+ * however it can also be based on a uni-directional heartbeat message.
+ * When based on a mutual subscription just Liveness is used.  When based on a uni-directional
+ * heartbeat message LowPowerHeartbeatSettings define the controlling parameters for that message
+ * Liveness is always published by the observer using the resource ID of the device being observed
+ *
+ * Properties:
+ *     status
+ *     time_status_changed
+ *     max_inactivity_duration
+ *
+ * The properties express current connectivity, last time the connectivity changed and the amount
+ * of time that must elapse without valid messages to consider the device offline.
+ *
+ *     status                   Represents the current status of the liveness of the device being
+ *                              monitored.  In most cases this will just represent the ONLINE /
+ *                              UNREACHABLE states, however it could be implemented in the trait
+ *                              handler to have a subscription on another device's status properties
+ *                              that could be republished here.
+ *     time_status_changed      This value represents the last time the device status was changed.
+ *                              It will be updated whenever the status is changed.
+ *     max_inactivity_duration  This value represents how much time must pass before the device
+ *                              is considered offline. The device will be considered offline if
+ *                              none of the following messages are received within this time:
+ *                                  - When using a mutual subscription
+ *                                      Any WDM message with the Subscription ID established when
+ *                                      the mutual subscription was created
+ *                                  - When using the low power heartbeat profile
+ *                                      Any heartbeat message
+ */
+
+message LivenessTrait {
+  option (wdl.message_type) = TRAIT;
+  option (wdl.trait) = {
+    stability: PROD,
+    id: 0x0022,
+    vendor_id: 0x0000,
+    version: 2,
+    published_by: EXTERNAL
+  };
+  // go/caspian-phoenix-retention
+  option (datapol.msg_retention) = {context: "caspian", desired_retention: RT_YEAR};
+
+  // ----------- PROPERTIES ----------- //
+  option (wdl.properties) = {
+    writable: READ_ONLY,
+    extendable: true,
+    reserved_tag_min: 1,
+    reserved_tag_max: 31
+  };
+
+  enum LivenessDeviceStatus {
+    LIVENESS_DEVICE_STATUS_UNSPECIFIED = 0;               /// Device status is unspecified
+    LIVENESS_DEVICE_STATUS_ONLINE = 1;                    /// Device is sending messages
+    LIVENESS_DEVICE_STATUS_UNREACHABLE = 2;               /// Device is not reachable over network
+    LIVENESS_DEVICE_STATUS_UNINITIALIZED = 3;             /// Device has not been initialized
+    LIVENESS_DEVICE_STATUS_REBOOTING = 4;                 /// Device being rebooted
+    LIVENESS_DEVICE_STATUS_UPGRADING = 5;                 /// Device offline while upgrading
+    LIVENESS_DEVICE_STATUS_SCHEDULED_DOWN = 6;            /// Device on a scheduled downtime
+  }
+
+  /// The overall connectivity status
+  /// Version 2 comments:
+  /// The overall 'status' is a derived attribute. It is set to 'LIVENESS_DEVICE_STATUS_UNREACHABLE'
+  /// when any unresponsiveness flag is 'true', or when heartbeat_status is 'LIVENESS_DEVICE_STATUS_UNREACHABLE'.
+  /// The overall status is 'LIVENESS_DEVICE_STATUS_ONLINE' only if neither of the unresponsiveness flags is
+  /// 'true' and 'heartbeat_status' is 'LIVENESS_DEVICE_STATUS_ONLINE'.
+  /// To be fully backward compatible for the existing devices/apps/downstream-consumer-services,
+  /// without the needs of having any of them perform migrations, this value aggregates the existing
+  /// 'passive' heartbeat-based liveness status AND the new 'active' unresponsiveness-based liveness
+  /// statuses. For device types which an 'observer' does not track unresponsiveness statuses for
+  /// (for observer 'phoenix-service', service-side config controls which device types the
+  /// unresponsiveness statuses are tracked), this field continues showing the existing 'passive'
+  /// heartbeat-based liveness status alone.
+  /// For example, for F1-reported P1 status, since F1 does not track unresponsiveness statuses (yet),
+  /// this field continues showing the existing 'passive' heartbeat-based liveness status alone,
+  /// while the newly added field 'heartbeat_status' is most likely auto default to
+  /// 'LIVENESS_DEVICE_STATUS_UNSPECIFIED'.
+  LivenessDeviceStatus status = 1;
+
+  /// Last time 'status' was changed
+  google.protobuf.Timestamp time_status_changed = 2;
+
+  /// Interval for how long without a qualifying heartbeat-like message before considering the device offline
+  google.protobuf.Duration max_inactivity_duration = 3 [(wdl.prop) = {duration_constraints: {signed: false,
+                                                                                             precision: 1,
+                                                                                             width: 32}}];
+  /// Heartbeat-based connectivity status, without taking into account request-induced unresponsiveness statuses.
+  /// For device types which do not track unresponsiveness (yet), an observer could opt to set both 'status' and
+  /// 'heartbeat_status' to a same enum value, for simplifying its implementation. In other words, this attribute
+  /// can have either the same value as 'status' or can be 'LIVENESS_DEVICE_STATUS_UNSPECIFIED' for, says, existing
+  /// Maldives device types which do not track unresponsiveness yet
+  LivenessDeviceStatus heartbeat_status = 4 [(wdl.prop) = {compatibility: {min_version: 2}}];
+
+  /// Last time 'heartbeat_status' was changed.
+  /// Unset if 'heartbeat_status' is unset, taking default 'LIVENESS_DEVICE_STATUS_UNSPECIFIED' value
+  google.protobuf.Timestamp time_heartbeat_status_changed = 5 [(wdl.prop) = {nullable: true, compatibility: {min_version: 2}}];
+
+  /// Identifying if the device is currently unresponsive to a NotifyRequest sent to it earlier.
+  /// Unset until the device is marked unresponsive for the first time
+  google.protobuf.BoolValue notify_request_unresponsiveness = 6 [(wdl.prop) = {nullable: true, compatibility: {min_version: 2}}];
+
+  /// Last time the notify_request_unresponsiveness was changed.
+  /// Unset until the device is marked unresponsive to a NotifyRequest for the first time
+  google.protobuf.Timestamp notify_request_unresponsiveness_time_status_changed = 7 [(wdl.prop) = {nullable: true, compatibility: {min_version: 2}}];
+
+  /// Identifying if the device is currently unresponsive to a CommandRequest sent to it earlier.
+  /// Unset until the device is marked unresponsive for the first time
+  google.protobuf.BoolValue command_request_unresponsiveness = 8 [(wdl.prop) = {nullable: true, compatibility: {min_version: 2}}];
+
+  /// Last time the command_request_unresponsiveness was changed.
+  /// Unset until the device is marked unresponsive to a CommandRequest for the first time
+  google.protobuf.Timestamp command_request_unresponsiveness_time_status_changed = 9 [(wdl.prop) = {nullable: true, compatibility: {min_version: 2}}];
+
+  // ----------- EVENTS ----------- //
+  message LivenessChangeEvent {
+    option (wdl.message_type) = EVENT;
+    option (wdl.event) = {
+      id: 1,
+      event_importance: EVENT_IMPORTANCE_PRODUCTION_CRITICAL
+    };
+    // go/caspian-phoenix-retention
+    option (datapol.msg_retention) = {context: "caspian", desired_retention: RT_YEAR};
+
+    /// The current overall connectivity status
+    LivenessDeviceStatus status = 1;
+
+    /// The current heartbeat-based connectivity status, without taking into account request-induced unresponsiveness statuses.
+    LivenessDeviceStatus heartbeat_status = 2 [(wdl.prop) = {compatibility: {min_version: 2}}];
+
+    /// Identifying if the device is currently unresponsive to a NotifyRequest sent to it earlier.
+    /// Unset until the device is marked unresponsive for the first time
+    google.protobuf.BoolValue notify_request_unresponsiveness = 3 [(wdl.prop) = {nullable: true, compatibility: {min_version: 2}}];
+
+    /// Identifying if the device is currently unresponsive to a CommandRequest sent to it earlier.
+    /// Unset until the device is marked unresponsive for the first time
+    google.protobuf.BoolValue command_request_unresponsiveness = 4 [(wdl.prop) = {nullable: true, compatibility: {min_version: 2}}];
+
+    /// The last overall connectivity status, to facilitate event consumers which would like to perform de-duping,
+    /// e.g., Hermes could use this info to drop the second event of two consecutive 'unreachable' ones
+    LivenessDeviceStatus prev_status = 5 [(wdl.prop) = {compatibility: {min_version: 2}}];
+  }
+}

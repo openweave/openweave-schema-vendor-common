@@ -1,0 +1,84 @@
+/*
+ *
+ *    Copyright (c) 2019 Google LLC.
+ *    Copyright (c) 2017-2018 Nest Labs, Inc.
+ *    All rights reserved.
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
+
+/**
+ *    @file
+ *      This file specifies a Weave Common trait that defines the
+ *      compile-time, static volume capabilities of a resource with a
+ *      simple audio component such as voice instructions or audible
+ *      indicators.
+ *
+ */
+
+syntax = "proto3";
+
+package weave.trait.audio;
+
+import "wdl/wdl_options.proto";
+
+option java_outer_classname = "WeaveInternalBasicVolumeCapabilitiesTrait";
+option objc_class_prefix = "SCM";
+
+/**
+ *  @brief
+ *    Basic Volume Capabilities Trait
+ *
+ *  When used with the Basic Volume Trait, this trait allows clients
+ *  flexibility in how volume is controlled and displayed.
+ *  For UIs that need to work with many devices, the client may ignore this
+ *  trait and simply use a normalized value between 0-100.
+ *  For a more accurate UI, clients can use this trait to display only the
+ *  supported volume levels, e.g. LOW, MEDIUM, HIGH. The client simply
+ *  needs to calculate the range for the desired set point and set the
+ *  volume to a value within that range.
+ *
+ */
+message BasicVolumeCapabilitiesTrait {
+  option (wdl.message_type) = TRAIT;
+
+  option (wdl.trait) = {
+    stability: PROD,
+    id: 0x0202,
+    vendor_id: 0x0000,
+    version: 1
+  };
+
+  // ----------- PROPERTIES ----------- //
+
+  /**
+   *  The count of volume set points (aka volume resolution) supported,
+   *  not including the 0 setpoint.
+   *  Changing the volume within the range of given set point should not
+   *  change the physical volume.
+   *  The range for each set point is uniformly distributed between 1-100.
+   *  Min volume value for set point i = floor(100*(i/n)) + 1
+   *  Max volume value for set point i = floor(100*((i+1)/n))
+   *  where n is the set point count
+   *  0 set points is invalid.
+   *  Example:
+   *  set point count |  set point range distribution
+   *  -----------------------------------------------------------
+   *                1 |  [0], [1, 100]
+   *                2 |  [0], [1, 50],  [51, 100]
+   *                3 |  [0], [1, 33],  [34, 66],  [67, 100]
+   *              100 |  [0], [1],      [2],       [3],       [4]....
+   */
+  uint32 volume_set_point_count = 1 [ (wdl.prop) = {uint_constraints:
+                                               {min: 1, max: 100, width: 8}}];
+}

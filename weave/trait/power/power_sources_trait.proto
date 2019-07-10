@@ -1,0 +1,191 @@
+/*
+ *
+ *    Copyright (c) 2019 Google LLC.
+ *    Copyright (c) 2016-2018 Nest Labs, Inc.
+ *    All rights reserved.
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
+
+/**
+ *    @file
+ *      This file specifies a Weave Common trait that generalizes how
+ *      any Weave device resource collectively presents information
+ *      about its power sources, common to any such device.
+ *
+ */
+
+syntax = "proto3";
+
+package weave.trait.power;
+
+import "wdl/wdl_options.proto";
+
+import "weave/trait/power/power_source_trait.proto";
+
+option java_outer_classname = "WeaveInternalPowerSourcesTrait";
+option objc_class_prefix = "SCM";
+
+/**
+ *  @brief
+ *    Power Sources
+ *
+ *  A Weave Common trait that allows vendors to enumerate up-leveled
+ *  information about all power sources in a device resource.
+ *
+ */
+message PowerSourcesTrait {
+        option (wdl.message_type) = TRAIT;
+
+        option (wdl.trait) = {
+          stability: ALPHA,
+                vendor_id: 0x0000,
+                id:        0x001A,
+                version:   1
+        };
+
+        // ----------- PROPERTIES ----------- //
+
+        option (wdl.properties) = {
+                writable: READ_ONLY,
+                variability: DYNAMIC,
+                extendable: false
+        };
+
+        /**
+         *  This property represents, as an enumeration, the condition
+         *  of the power sources in the device resource and, in
+         *  particular, whether they are operating normally and
+         *  require no intervention or attention or warrant
+         *  intervention or attention.
+         *
+         *  This property, in the context of this trait, provides a
+         *  quick, at-a-glance up-leveling for interested clients of
+         *  the condition state of power for a particular device
+         *  resource that is consistent for all devices and
+         *  independent of the combination and types of power sources
+         *  for a particular device.
+         *
+         *  The listing below illustrates in pseudocode the
+         *  calculation that a trait implementer should employ to
+         *  populate and publish this trait property.
+         *
+         *  @code
+         *  PowerSourcesCondition CalculatePowerSourcesCondition(void)
+         *  {
+         *      PowerSources sources = System().GetPowerSources();
+         *      PowerSourcesCondition condition = Nominal;
+         *      PowerSource source;
+         *
+         *      foreach source in sources
+         *      {
+         *          condition = source.GetCondition();
+         *
+         *          if (condition == Critical)
+         *          {
+         *               break;
+         *          }
+         *      }
+         *
+         *      return condition;
+         *  }
+         *  @endcode
+         *
+         */
+        weave.trait.power.PowerSourceTrait.PowerSourceStatus condition      = 1;
+
+        /**
+         *  This property indicates the redundancy of the power
+         *  sources in the device resource.
+         * 
+         *  This provides a quick, at-a-glance up-leveling for
+         *  interested clients of the redundancy state of power for a
+         *  particular device resource that is consistent for all
+         *  devices and independent of the combination and types of
+         *  power sources for a particular device.
+         *
+         *  The listing below illustrates in pseudocode the
+         *  calculation that a trait implementer should employ to
+         *  populate and publish this trait property.
+         *
+         *  @code
+         *  Boolean CalculatePowerSourcesRedunancy(void)
+         *  {
+         *      PowerSources sources = System().GetPowerSources();
+         *      Boolean redundant = true;
+         *      PowerSource source;
+         *  
+         *      if (sources.GetCount() <= 1)
+         *      {
+         *          redundant = false;
+         *      }
+         *      else
+         *      {
+         *          foreach source in sources
+         *          {
+         *              PowerSourceStatus status = source.GetStatus();
+         *  
+         *              if (status != Active && status != Standby)
+         *              {
+         *                  redundant = false;
+         *                  break;
+         *              }
+         *          }
+         *      }
+         *  
+         *      return redundant;
+         *  }
+         *  @endcode
+         *
+         */
+        bool                                                 redundant      = 2;
+
+        /**
+         *  This property represents as an array *all* of the
+         *  _published_ power sources in a device resource, sorted
+         *  ascending on the power source order as the primary key and
+         *  the power source status as the secondary sort key. The
+         *  array values are the instance identifiers of the
+         *  respective power sources.
+         *
+         *  By using the instance identifiers of each power source as
+         *  the array values, this allows publisher clients to easily
+         *  and directly place the instance identifier into a
+         *  subsequent publisher observation request to dive into
+         *  additional details about a power source.
+         *
+         */
+        repeated uint32                                      sources        = 3;
+
+        /**
+         *  This property represents as an array *all* of the _active_
+         *  power sources in a device resource, sorted ascending on
+         *  the power source order as the primary key and the power
+         *  source status, filtering out Inactive status, as the
+         *  secondary sort key. The array values are the instance
+         *  identifiers of the respective power sources.
+         *
+         *  By using the instance identifiers of each power source as
+         *  the array values, this allows publisher clients to easily
+         *  and directly place the instance identifier into a
+         *  subsequent publisher observation request to dive into
+         *  additional details about a power source.
+         *
+         *  This representation also allows trait observers to easily
+         *  dereference to the most important source, that in the
+         *  first array slot, the primary, active source.
+         *
+         */
+        repeated uint32                                      active_sources = 4;
+}
+

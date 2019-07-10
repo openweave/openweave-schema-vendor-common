@@ -1,0 +1,84 @@
+/*
+ *
+ *    Copyright (c) 2019 Google LLC.
+ *    Copyright (c) 2016-2018 Nest Labs, Inc.
+ *    All rights reserved.
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
+
+/**
+ *    @file
+ *      This file specifies a Weave Common trait that expresses a
+ *      signal of a resource liveness relative to another.
+ *
+ */
+
+syntax = "proto3";
+package weave.trait.heartbeat;
+
+import "wdl/wdl_options.proto";
+import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+
+option java_outer_classname = "WeaveInternalLivenessSignalTrait";
+option objc_class_prefix = "SCM";
+
+/**
+ * Liveness Signal trait.
+ * Expresses a signal of a device liveness relative to another device or service.
+ * Liveness signal is always published by an observer, device or service, using the resource ID
+ * of the device being observed.
+ * As of the initial version:
+ *  - It does not have properties, but only an event.
+ *  - It is published by a frontend observer to inform subscribed parties, e.g., Liveness Service,
+ *      to further process the signal to change the subject device's overall liveness trait state.
+ */
+message LivenessSignalTrait {
+  option (wdl.message_type) = TRAIT;
+  option (wdl.trait) = {
+    stability: ALPHA,
+    id: 0x0025,
+    vendor_id: 0x0000,
+    version: 1,
+    published_by: EXTERNAL
+  };
+
+  enum LivenessSignalType {
+    LIVENESS_SIGNAL_TYPE_UNSPECIFIED = 0;                      /// Signal type Unspecified
+    LIVENESS_SIGNAL_TYPE_MUTUAL_SUBSCRIPTION_ESTABLISHED = 1;  /// A new mutual subscription with device is established successfully
+    LIVENESS_SIGNAL_TYPE_SUBSCRIPTION_HEARTBEAT = 2;           /// Device sends up a subscription-based Wdm message, e.g., NotifyRequest
+    LIVENESS_SIGNAL_TYPE_NON_SUBSCRIPTION_HEARTBEAT = 3;       /// Device sends up a non-subscription-based Wdm message, e.g., UpdateRequest
+    LIVENESS_SIGNAL_TYPE_NOTIFY_REQUEST_UNDELIVERED = 4;       /// Outbound NotifyRequest to device fails to be delivered
+    LIVENESS_SIGNAL_TYPE_COMMAND_REQUEST_UNDELIVERED = 5;      /// Outbound CommandRequest to device fails to be delivered
+  }
+
+  // ----------- EVENTS ----------- //
+  message LivenessSignalEvent {
+    option (wdl.message_type) = EVENT;
+    option (wdl.event) = {
+      id: 1,
+      event_importance: EVENT_IMPORTANCE_PRODUCTION_CRITICAL
+    };
+    // go/caspian-phoenix-retention
+    option (datapol.msg_retention) = {context: "caspian", desired_retention: RT_5_WEEKS};
+
+    /// The liveness signal type of this event.
+    LivenessSignalType signal_type = 1;
+
+    /// If this liveness signal is associated with a Wdm mutual subscription,
+    /// the subscription ID is specified here.
+    google.protobuf.Int64Value wdm_subscription_id = 2 [(wdl.prop) = {nullable: true}];
+  }
+}

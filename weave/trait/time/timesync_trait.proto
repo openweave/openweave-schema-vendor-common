@@ -1,0 +1,81 @@
+/*
+ *
+ *    Copyright (c) 2019 Google LLC.
+ *    Copyright (c) 2016-2018 Nest Labs, Inc.
+ *    All rights reserved.
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
+
+/**
+ *    @file
+ *      This file specifies a Weave Common trait that generalizes the
+ *      information in the Schema corresponding to timesync events.
+ *
+ */
+
+syntax = "proto3";
+package weave.trait.time;
+import "wdl/wdl_options.proto";
+import "google/protobuf/duration.proto";
+import "google/protobuf/wrappers.proto";
+import "weave/common/identifiers.proto";
+
+option java_outer_classname = "WeaveInternalTimesyncTrait";
+option objc_class_prefix = "SCM";
+
+
+/**
+ * @brief Timesync trait
+ *
+ * @note
+ *  Handles all the logging related to timesync events.
+ */
+message TimesyncTrait {
+  option (wdl.message_type) = TRAIT;
+  option (wdl.trait) = {
+    stability: ALPHA,
+    id: 0x1104,
+    vendor_id: 0x0000,
+    version: 1
+  };
+
+ /**
+  * @brief Timesync Event
+  *
+  * @note
+  *  Whenever a device receives the current time from a time server, it adjusts the
+  *  system time and logs the TimeSyncEvent which specifies the offset by which the
+  *  system time was adjusted.
+  */
+  message TimeSyncEvent {
+    option (wdl.message_type) = EVENT;
+    option (wdl.event) = {
+      id: 1,
+      event_importance: EVENT_IMPORTANCE_DEBUG
+    };
+
+    /* offset is the amount by which system time is adjusted */
+    google.protobuf.Duration offset = 1 [(wdl.prop) = {duration_constraints: {signed: true, precision: 0.001, width: 64}}];
+
+    /* server_id is used to indicate a server in the phoenix fold */
+    weave.common.ResourceId server_id = 2 [(wdl.prop) = {nullable: true}];
+
+    /* server_address contains the ip of the external time server. Only one of either server_id or server_address should be populated */
+    google.protobuf.StringValue server_address = 3 [(wdl.prop) = {nullable: true}];
+
+    /* slew specifies if the time adjustment is based on a slew or a jump */
+    bool slew = 4;
+  };
+}
+

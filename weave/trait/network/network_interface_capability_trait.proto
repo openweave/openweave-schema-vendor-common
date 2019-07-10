@@ -1,0 +1,85 @@
+/*
+ *
+ *    Copyright (c) 2019 Google LLC.
+ *    Copyright (c) 2016-2018 Nest Labs, Inc.
+ *    All rights reserved.
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
+
+/**
+ *    @file
+ *      This file specifies a Weave Common trait that generalizes the
+ *      information in the Schema corresponding to the capabilities of
+ *      a network interface.
+ */
+
+syntax = "proto3";
+package weave.trait.network;
+import "wdl/wdl_options.proto";
+import "weave/common/string_ref.proto";
+
+option java_outer_classname = "WeaveInternalNetworkInterfaceCapabilityTrait";
+option objc_class_prefix = "SCM";
+
+/**
+ * @brief   Network interface capability trait
+ *
+ * @note
+ *  Every device resource provides one or more instances of a derived type of the network interface capability trait, e.g. for a
+ *  Wi-Fi™ network interface, a Thread™ network interface, et cetera, which are derived from a basis trait including the
+ *  properties, events and functions common to all network interface capability traits.
+ */
+message NetworkInterfaceCapabilityTrait {
+    option (wdl.message_type) = TRAIT;
+    option (wdl.trait) = {
+      stability: PROD,
+        vendor_id:  0x0000,
+        id:         0x0b01,
+        version:    1,
+        extendable: true
+    };
+
+    /**
+     * @brief   Network interface type descriptor
+     *
+     * @note
+     *  Values of this extendable enumeration type are used as descriptors in the Schema for the extended types of the basic network
+     *  interface capability and network interface traits. The type descriptor is defined for use with the \c type property in the
+     *  \c NetworkInterfaceCapabilityTrait trait definition.
+     */
+    enum NetworkInterfaceType {
+        option (wdl.enumopts) = {
+            extendable: true,
+            reserved_tag_min: 1,
+            reserved_tag_max: 31
+        };
+
+        NETWORK_INTERFACE_TYPE_UNSPECIFIED = 0;     /** Network interface of unspecified type. */
+        NETWORK_INTERFACE_TYPE_WEAVE_TUNNEL = 1;    /** Tunnel network interface with IPv6 route to Nest service for Weave fabric. */
+        NETWORK_INTERFACE_TYPE_WIFI = 2;            /** Wi-Fi™ network interface. */
+        NETWORK_INTERFACE_TYPE_THREAD = 3;          /** Thread™ network interface. */
+        NETWORK_INTERFACE_TYPE_CELLULAR = 4;        /** 3GPP cellular network interface. */
+    };
+
+    // ----------- PROPERTIES ----------- //
+    option (wdl.properties) = {
+        extendable: true,
+        reserved_tag_min: 1,
+        reserved_tag_max: 31,
+        variability: STATIC
+    };
+
+    NetworkInterfaceType type = 1;              /** Type descriptor for the network interface. */
+    weave.common.StringRef description = 2;     /** Human-presentable textual description of the network interface. */
+}

@@ -1,0 +1,79 @@
+/*
+ *
+ *    Copyright (c) 2019 Google LLC.
+ *    Copyright (c) 2016-2018 Nest Labs, Inc.
+ *    All rights reserved.
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
+
+/**
+ *    @file
+ *      This file defines the Security trait.
+ *
+ */
+
+syntax = "proto3";
+
+package weave.trait.security;
+
+import "google/protobuf/timestamp.proto";
+import "wdl/wdl_options.proto";
+
+option java_outer_classname = "WeaveInternalSecurityTrait";
+option objc_class_prefix = "SCM";
+
+message SecurityTrait { 
+  option (wdl.message_type) = TRAIT;
+  option (wdl.trait) = {
+    stability: ALPHA,
+    id: 0x0E06,
+    vendor_id: 0x0000,
+    version: 1
+  };
+
+
+  enum ArmState {
+    ARM_STATE_UNSPECIFIED = 0;
+    ARM_STATE_DISARMED = 1;
+    ARM_STATE_ARMING = 2;
+    ARM_STATE_ARMED = 3;
+  }
+
+  enum ArmMode {
+    ARM_MODE_UNSPECIFIED = 0;
+    ARM_MODE_DISARMED = 1;
+    ARM_MODE_PERIMETER = 2;
+    ARM_MODE_PERIMETER_AND_MOTION = 3;
+  }
+
+  enum AlarmState {
+    ALARM_STATE_UNSPECIFIED = 0;
+    ALARM_STATE_NOT_ALARMING = 1;
+    ALARM_STATE_PREALARMING = 2;
+    ALARM_STATE_ALARMING = 3;
+  }
+  
+  // ----------- PROPERTIES ----------- //
+  // current mode of the security system
+  ArmMode arm_mode = 1;
+
+  // current state of the security system
+  ArmState arm_state = 2;
+
+  // current alarm state of the security system
+  AlarmState alarm_state = 3;
+
+  // if armState == ARMING, time the system is expected to arm
+  google.protobuf.Timestamp expected_arm_time = 4; 
+}

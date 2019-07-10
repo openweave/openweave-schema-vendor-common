@@ -1,0 +1,231 @@
+/*
+ *
+ *    Copyright (c) 2019 Google LLC.
+ *    Copyright (c) 2016-2018 Nest Labs, Inc.
+ *    All rights reserved.
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
+
+/**
+ *    @file
+ *      This file specifies a Weave Common trait that generalizes how
+ *      any Weave device resource presents basic information common to
+ *      any such device resource, including vendor identifier, product
+ *      identifier, product revision, serial number, software version,
+ *      and manufacturing date.
+ *
+ */
+
+syntax = "proto3";
+
+package weave.trait.description;
+
+import "wdl/wdl_options.proto";
+import "weave/common/string_ref.proto";
+import "google/protobuf/wrappers.proto";
+
+option java_outer_classname = "WeaveInternalDeviceIdentityTrait";
+option objc_class_prefix = "SCM";
+
+/**
+ *  @brief
+ *    Device Identity
+ *
+ *  A Weave Common trait that generalizes how any Weave device
+ *  resource presents basic information common to any such device
+ *  resource, including vendor identifier, product identifier, product
+ *  revision, serial number, software version, and manufacturing date.
+ *
+ */
+message DeviceIdentityTrait {
+    option (wdl.message_type) = TRAIT;
+    option (wdl.trait) = {
+      stability: PROD,
+        vendor_id:        COMMON,
+        id:               0x0017,
+        version:          1,
+    };
+
+
+    // ----------- PROPERTIES ----------- //
+    option (wdl.properties) = {
+        variability:      STATIC,
+        writable:         READ_ONLY,
+        extendable:       true
+        reserved_tag_min: 1,
+        reserved_tag_max: 63
+    };
+
+    /**
+     *  The Vendor Identifier property is an unsigned fixed point
+     *  number uniquely describing a particular Weave product
+     *  manufacturer or vendor. This value is assigned and
+     *  administered by Nest Labs. - See vendors.proto for a list
+     *  NOTE:  The numeric value needs to be used here, you can't
+     *  use the vendor enum.
+     *
+     */
+    uint32                  vendor_id              = 1 [(wdl.prop) = {uint_constraints: {width: 16, min: 1, max: 65534}}];
+
+    /**
+     *  The Vendor Identifier Description property is a UTF-8
+     *  String or unsigned fixed point number (string reference)
+     *  representing a human-readable representation, in the
+     *  vendor's preferred language localization, of the vendor
+     *  who made or sold the device or product associated with
+     *  this trait instance. This value is assigned and
+     *  administered by the vendor but should generally match and
+     *  be consistent with the vendor name registered with Nest
+     *  Labs at the time the vendor's identifier was registered
+     *  for.
+     *
+     *  The UTF-8 String is used when the description is a
+     *  non-localized string literal. The string reference is used
+     *  when the string, localized or not, is located in a string
+     *  table associated with the device resource containing this
+     *  trait instance.
+     *
+     */
+    weave.common.StringRef  vendor_id_description  = 2 [(wdl.prop) = {string_constraints: {max_length: 64},
+                                                                      optional: true,
+                                                                      nullable: true}];
+
+    /**
+     *  The Product Identifier property is an unsigned fixed point
+     *  number uniquely describing a particular Weave product made
+     *  and sold by a manufacturer or vendor. This value is
+     *  assigned and administered by the vendor.  Its also the value
+     *  used in the resource file for vendor_product_id.
+     *
+     */
+    uint32                  vendor_product_id      = 3 [(wdl.prop) = {uint_constraints: {width: 16, min: 1, max: 65534}}];
+
+    /**
+     *  The Product Identifier Description property is a UTF-8
+     *  String or unsigned fixed point number (string reference)
+     *  representing a human-readable representation, in the
+     *  vendor's preferred language localization, of the device or
+     *  product associated with this trait instance. This value is
+     *  assigned and administered by the vendor.
+     *
+     *  The UTF-8 String is used when the description is a
+     *  non-localized string literal. The string reference is used
+     *  when the string, localized or not, is located in a string
+     *  table associated with the device resource containing this
+     *  trait instance.
+     *
+     */
+    weave.common.StringRef  product_id_description = 4 [(wdl.prop) = {string_constraints: {max_length: 64},
+                                                                      optional: true,
+                                                                      nullable: true}];
+
+    /**
+     *  The Product Revision property is an unsigned fixed point
+     *  number describing the revision of this particular Weave
+     *  product. This value is assigned and administered by the
+     *  vendor.
+     *
+     */
+    uint32 product_revision                        = 5 [(wdl.prop) = {uint_constraints: {width: 16}}];
+
+    /**
+     *  The Serial Number property is a UTF-8 String representing
+     *  the unique serial number for the product. This should
+     *  typically correspond to a value physically printed on the
+     *  product or its packaging. This value is assigned and
+     *  administered by the vendor.
+     *
+     */
+    string serial_number                           = 6 [(wdl.prop) = {string_constraints: {max_length: 32}}];
+
+    /**
+     *  The Software Version property is a UTF-8 String
+     *  representing primary firmware or software currently
+     *  running on the device or product.
+     *
+     */
+    string software_version                        = 7 [(wdl.prop) = {string_constraints: {max_length: 32}}];
+
+    /**
+     *  The Manufacture Date property is a UTF-8 String
+     *  representing the manufacturing date and time of the
+     *  product in ISO 8601 format. This value is assigned and
+     *  administered by the vendor.
+     *
+     *  The following table illustrates some common example ISO
+     *  8601-formatted manufacturing dates, using ISO 8601 basic
+     *  and extended formats.
+     *
+     *    | Content                             | ISO 8601 Basic Format | ISO 8601 Extended Format |
+     *    |:------------------------------------|:---------------------:|:------------------------:|
+     *    | January 2017                        | -                     | 2017-01                  |
+     *    | March 23, 2014                      | 20140323              | 2014-03-23               |
+     *    | Week 20, 2016                       | 2016W20               | 2016-W20                 |
+     *    | Saturday, Week 39, 2015             | 2015W39D7             | 2016-W39D7               |
+     *
+     *  @note
+     *    Only manufacturers using ISO 8601-compliant weeks shall
+     *    use the ISO 8601 week formats.
+     *
+     *    Frequently, manufacturing week information is based on
+     *    vendor-specific week information, such as those tied to
+     *    the vendor's financial calendar or other
+     *    calendars. Unfortunately, when such weeks are placed
+     *    into ISO 8601-compliant week formats, incorrect
+     *    calculation of manufacturing time stamps may
+     *    occur. Consequently, only vendors logging and
+     *    serializing manufacturing week information with ISO
+     *    8601-compliant weeks shall use those formats for this
+     *    trait property to avoid such miscalculations.
+     *
+     */
+    google.protobuf.StringValue manufacturing_date = 8 [(wdl.prop) = {string_constraints: {max_length: 32},
+                                                                      optional: true,
+                                                                      nullable: true}];
+
+    /**
+     *  The device_id property is a Weave Node ID of the device in
+     *  EUI-64 format. The quantity is encoded as a 64-bit unsigned
+     *  integer, created in accordance with
+     *  http://standards.ieee.org/develop/regauth/tut/eui64.pdf.  The
+     *  OUI occupies the upper bits of the encoding.
+     *
+     *  Two distinguished Node Identifier values are reserved for
+     *  special purposes: the Unspecified Node identifier
+     *  0x0000000000000000, and the Any Node identifier
+     *  0xffffffffffffffff. The first is is never transmitted, i.e. it
+     *  is only used in message processing logic as a placeholder when
+     *  no valid node identifier is available. The second is used as a
+     *  destination for messages sent to any receiving correspondent.
+     *
+     *  Clients and proxies reading this value must not automatically
+     *  trust it; instead they must verify that the value of this
+     *  property is consistent with the resource ID that this trait
+     *  belongs to.  Proxies may derive this value from the resource
+     *  ID when the device chooses not to communicate this value.
+     */
+    uint64 device_id                               = 9 [(wdl.prop) = {optional: true}, jstype = JS_STRING];
+
+    /**
+     *  The fabric_id property is the ID of the Weave fabric to which
+     *  this device belongs.  It is a 64-bit unsigned integer.
+     *
+     *  Clients and proxies reading this values must not automatically
+     *  trust it; instead they must verify that the fabric_id is
+     *  consistent with the fabric associated with the
+     *  structure. Proxies may derive this value from the structure
+     *  when the device chooses not to communicate this value.
+     */
+    uint64 fabric_id                               = 10 [(wdl.prop) = {optional: true}, jstype = JS_STRING];
+}

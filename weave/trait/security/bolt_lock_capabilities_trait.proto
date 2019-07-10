@@ -1,0 +1,95 @@
+/*
+ *
+ *    Copyright (c) 2019 Google LLC.
+ *    Copyright (c) 2016-2018 Nest Labs, Inc.
+ *    All rights reserved.
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
+
+/**
+ *    @file
+ *      This file defines the Bolt Lock Capabilities trait.
+ *
+ */
+
+syntax = "proto3";
+
+package weave.trait.security;
+
+import "google/protobuf/duration.proto";
+import "wdl/wdl_options.proto";
+
+/**
+ * Bolt Lock Capabilities Trait is meant to expose the dynamic, but slow changing capabilities of a Bolt Lock
+ */
+
+option java_outer_classname = "WeaveInternalBoltLockCapabilitiesTrait";
+option objc_class_prefix = "SCM";
+
+/**
+ * Bolt Lock Capabilities Trait is meant to expose the dynamic, but slow changing capabilities of a Bolt Lock
+ */
+message BoltLockCapabilitiesTrait {
+  option (wdl.message_type) = TRAIT;
+  option (wdl.trait) = {
+    stability: PROD,
+    id: 0x0E0A,
+    vendor_id: 0x0000,
+    version: 1
+  };
+
+  /**
+   * Possible handedness values for the bolt lock
+   * How do you tell the handedness of the bolt?  Open the door and stand in your doorframe
+   * with your back the jamb (the side with the hinges).  If your door is on your left
+   * it is left handed.  If on the right it is right handed.
+   */
+  enum BoltLockCapabilitiesHandedness {
+    option (wdl.enumopts) = {
+      extendable: true,
+      reserved_tag_min: 1,
+      reserved_tag_max: 31
+    };
+
+    BOLT_LOCK_CAPABILITIES_HANDEDNESS_UNSPECIFIED = 0;
+
+    /// Definitely right handed.  May be autodetected.
+    /// BoltLockSettings.handedness must not be specified
+    BOLT_LOCK_CAPABILITIES_HANDEDNESS_RIGHT = 1;
+
+    /// Definitely left handed.  May be autodetected.
+    /// BoltLockSettings.handedness must not be specified
+    BOLT_LOCK_CAPABILITIES_HANDEDNESS_LEFT = 2;
+
+    /// Definitely unknown and unconfigurable
+    /// BoltLockSettings.handedness must not be specified
+    BOLT_LOCK_CAPABILITIES_HANDEDNESS_FIXED_UNKNOWN = 3;
+  };
+
+  // ----------- PROPERTIES ----------- //
+  option (wdl.properties) = {
+    writable: READ_ONLY,
+    extendable: true,
+    reserved_tag_min: 1,
+    reserved_tag_max: 31
+  };
+
+  /// The direction of the lock bolt.  See BoltLockCapabilitiesHandedness above
+  BoltLockCapabilitiesHandedness handedness = 1;
+
+  /// Max values for auto relock in BoltLockSettingsTrait
+  google.protobuf.Duration max_auto_relock_duration = 2 [(wdl.prop) = {duration_constraints: {signed: false,
+                                                                                              precision: 1,
+                                                                                              width: 32}}];
+}

@@ -1,0 +1,97 @@
+/*
+ *
+ *    Copyright (c) 2019 Google LLC.
+ *    Copyright (c) 2016-2018 Nest Labs, Inc.
+ *    All rights reserved.
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
+
+/**
+ *    @file
+ *      This file specifies a Weave Common trait that represents the
+ *      fanout synchronization of a trait to other resources.
+ *
+ */
+
+syntax = "proto3";
+package weave.trait.synchronization;
+
+import "wdl/wdl_options.proto";
+import "google/protobuf/timestamp.proto";
+
+option java_outer_classname = "WeaveInternalSynchronizationTrait";
+option objc_class_prefix = "SCM";
+
+/**
+ * For representing fanout synchronization of a trait to other resources, with
+ * only a boolean understanding of whether the resource has been brought up-to-date.
+ * This trait must reside in the same resource, and be hosted on the same service
+ * as the traits it is tracking synchronization for.
+ */
+message SynchronizationTrait {
+  option (wdl.message_type) = TRAIT;
+  option (wdl.trait) = {
+    stability: PROD,
+    id: 0x1201,
+    vendor_id: 0x0000,
+    version: 1
+  };
+
+  enum SyncronizationStatus {
+    SYNCRONIZATION_STATUS_UNSPECIFIED  = 0;
+    SYNCRONIZATION_STATUS_SYNCHRONIZED = 1; /// Resource is synchronized
+    SYNCRONIZATION_STATUS_PENDING      = 2; /// Sync in progress and expected to happen
+    SYNCRONIZATION_STATUS_TIMEOUT      = 3; /// Sync failed as resource is unreachable; should eventually succeed
+    SYNCRONIZATION_STATUS_FAILED_RETRY = 4; /// Sync failed on resource non-fatally; could eventually succeed
+    SYNCRONIZATION_STATUS_FAILED_FATAL = 5; /// Sync failed on resource fatally; will never succeed
+  }
+
+  message SynchronizationEntry {
+    /// Sync status of this resource, whether it is expected to eventually succeed
+    SyncronizationStatus sync_status = 1;
+
+    /// When the last time this resource became synced with the source
+    google.protobuf.Timestamp last_synced_time = 2;
+
+    /// Version that this resource is currently at; optional
+    uint32 current_revision = 3;
+  }
+
+  // ----------- PROPERTIES ----------- //
+  option (wdl.properties) = {
+    writable: READ_ONLY
+  };
+
+  /// Traits that this is tracking synchronization for
+  repeated uint32 trait_id = 1;
+
+  /// Total number of devices this trait is synchronizing to
+  uint32 num_devices = 2;
+
+  /// Number of devices which have not yet synced to the current state
+  uint32 num_unsynced_devices = 3;
+
+  /**
+   * Version number that everything is expected to be at; optional.  A source
+   * could indicate a map of version to current value to provide a more complete
+   * picture of the state of each fanout resource.
+   */
+  uint32 current_revision = 4;
+
+  /// A map of resource_id to its sync state
+  map <string, SynchronizationEntry> resource_sync_status = 5;
+
+  /// Last time a synchronization was requested
+  google.protobuf.Timestamp last_sync_time = 6;
+}

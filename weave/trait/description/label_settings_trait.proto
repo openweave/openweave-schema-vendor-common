@@ -1,0 +1,120 @@
+/*
+ *
+ *    Copyright (c) 2019 Google LLC.
+ *    Copyright (c) 2016-2018 Nest Labs, Inc.
+ *    All rights reserved.
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
+
+/**
+ *    @file
+ *      This specifies a Weave Common trait that allows users to
+ *      decorate or augment a resource with a descriptive name or
+ *      label to help them differentiate one resource from another in
+ *      a way that is meaningful and familiar to them, as a setting.
+ *
+ */
+
+syntax = "proto3";
+
+package weave.trait.description;
+
+import "wdl/wdl_options.proto";
+
+option java_outer_classname = "WeaveInternalLabelSettingsTrait";
+option objc_class_prefix = "SCM";
+
+/**
+ * This specifies a Weave Common trait that allows users to
+ * decorate or augment a device resource with a descriptive name
+ * or label to help them differentiate one device resource from
+ * another in a way that is meaningful and familiar to them, as a
+ * setting.
+ *
+ */
+message LabelSettingsTrait {
+  option (wdl.message_type) = TRAIT;
+
+  option (wdl.trait) = {
+    stability: PROD,
+          vendor_id: 0x0000,
+          id:        0x0016,
+          version:   1
+  };
+
+  /**
+   *  @brief
+   *    Label
+   *
+   *  A Weave Common trait that allows users to decorate or augment a
+   *  resource with a descriptive name or label to help them
+   *  differentiate one device resource from another in a way that is
+   *  meaningful and familiar to them, as a setting.
+   *
+   *  Each and every physical resource within the Works with Nest
+   *  ecosystem has a location it is installed in or affixed to. User
+   *  interfaces will group and organize the device resource by its
+   *  localized location such as:
+   *
+   *    - Hallway
+   *      o Nest Protect
+   *      o Nest Protect
+   *
+   *    - Bedroom
+   *      o Nest Protect
+   *
+   *    - Sauna
+   *      o Nest Learning Thermostat
+   *
+   *    - Bat Cave
+   *      o Nest Learning Thermostat
+   *
+   *  In some instances, those locations are large enough to encompass
+   *  multiple products of the same type, such as two Nest Protects at
+   *  the end of a very long hallway or corridor. To disambiguate
+   *  multiple device resources in the same physical location or space,
+   *  additional decoration may be necessary.
+   *
+   *  The example device resources above can be decorated to
+   *  disambiguate them:
+   *
+   *    - Hallway
+   *      o Nest Protect (Left)
+   *      o Nest Protect (Right)
+   *
+   *    - Bedroom
+   *      o Nest Protect (Moe's)
+   *
+   *    - Sauna
+   *      o Nest Learning Thermostat (Outdoor)
+   *
+   *    - Bat Cave
+   *      o Nest Learning Thermostat (Bruce's under the Waterfall)
+   *
+   *  Where the parenthetical '()' content represents the additional description
+   *  provided by this trait.
+   *
+   */
+
+
+  // ----------- PROPERTIES ----------- //
+  /**
+   *  The Label property is a UTF-8 String representing a
+   *  human-readable, freeform string that may be used to
+   *  disambiguate a device resource associated with the trait
+   *  instance.
+   *
+   */
+  string label = 1;
+}

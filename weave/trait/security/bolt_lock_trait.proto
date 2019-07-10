@@ -1,0 +1,371 @@
+/*
+ *
+ *    Copyright (c) 2019 Google LLC.
+ *    Copyright (c) 2016-2018 Nest Labs, Inc.
+ *    All rights reserved.
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
+
+/**
+ *    @file
+ *      This file defines the Bolt Lock trait.
+ *
+ */
+
+syntax = "proto3";
+
+package weave.trait.security;
+
+import "wdl/wdl_options.proto";
+import "weave/common/identifiers.proto";
+import "google/protobuf/timestamp.proto";
+
+option java_outer_classname = "WeaveInternalBoltLockTrait";
+option objc_class_prefix = "SCM";
+
+/**
+ * Residential Bolt Lock Trait is meant to cover a physical residential lock that uses a deadbolt as its locking mechanism.
+ * Beyond its physical attributes, it is REQUIRED to have the following functionality:
+ * - Retract/Extend Bolt remotely
+ * - Retract/Extend Bolt locally
+ * - Report the bolt state itself (i.e. Extended, Retracted, etc.  See BoltState for more info)
+ * - Report the bolt actuator state (i.e. OK, Moving, Locking, Unlocking, etc.  See BoltActuatorState for more info)
+ * - Report what caused the bolt state or actuator state to change (i.e. Inside, Outside, Outside Keypad.  See BoltBlame)
+ *
+ * Optionally, a lock may
+ * - Report the locked state of the lock as a whole (i.e. Unlocked, Locked, etc.  See LockedState)
+ *
+ * V2 adds support for voice arming (via cloud)
+ *
+ * Scenarios:
+ * - Bolt extended and locked, User retracts bolt w/a pin code
+ *      1) Bolt begins retracting
+ *      2) Notify
+ *      actuator_state = BOLT_ACTUATOR_STATE_UNLOCKING
+ *      locked_state = BOLT_LOCKED_STATE_UNLOCKED
+ *      3) Event BoltActuatorStateChangeEvent
+ *      state = BOLT_STATE_EXTENDED
+ *      actuator_state = BOLT_ACTUATOR_STATE_UNLOCKING
+ *      locked_state = BOLT_LOCKED_STATE_UNLOCKED
+ *      blame = BOLT_BLAME_OUTSIDE_KEYPAD_PIN
+ *      userid = someuserid of matching pincode
+ *      4) Bolt retraction completes
+ *      5) Notify
+ *      state = BOLT_STATE_RETRACTED
+ *      actuator_state = BOLT_ACTUATOR_STATE_OK
+ *      6) Event BoltActuatorStateChangeEvent w/
+ *      state = BOLT_STATE_RETRACTED
+ *      actuator_state = BOLT_ACTUATOR_STATE_OK
+ *      locked_state = BOLT_LOCKED_STATE_UNLOCKED
+ *      blame = BOLT_BLAME_OUTSIDE_KEYPAD_PIN
+ *      userid = someuserid of matching pincode
+ *
+ * - Bolt retracted and unlocked, User extends bolt w/one touch
+ *      1) Bolt begins extending
+ *      2) Notify
+ *      state = BOLT_STATE_EXTENDED
+ *      actuator_state = BOLT_ACTUATOR_STATE_LOCKING
+ *      locked_state = BOLT_LOCKED_STATE_UNLOCKED
+ *      3) Event BoltActuatorStateChangeEvent
+ *      state = BOLT_STATE_EXTENDED
+ *      actuator_state = BOLT_ACTUATOR_STATE_LOCKING
+ *      locked_state = BOLT_LOCKED_STATE_UNLOCKED
+ *      blame = BOLT_BLAME_OUTSIDE_MANUAL
+ *      userid = <omitted>
+ *      4) Bolt extension completes
+ *      5) Notify
+ *      actuator_state = BOLT_ACTUATOR_STATE_OK
+ *      locked_state = BOLT_LOCKED_STATE_LOCKED
+ *      6) Event BoltActuatorStateChangeEvent
+ *      state = BOLT_STATE_EXTENDED
+ *      actuator_state = BOLT_ACTUATOR_STATE_OK
+ *      locked_state = BOLT_LOCKED_STATE_LOCKED
+ *      blame = BOLT_BLAME_OUTSIDE_MANUAL
+ *      userid = <omitted>
+ *
+ * - Bolt retracted and unlocked, User extends bolt w/mobile but does not lock
+ *      1) Update w/metadata
+ *          blame = BOLT_BLAME_REMOTE_USER
+ *          userid = someuserid
+ *      2) Bolt begins extending
+ *      3) Notify
+ *      state = BOLT_STATE_EXTENDED
+ *      actuator_state = BOLT_ACTUATOR_STATE_LOCKING
+ *      locked_state = BOLT_LOCKED_STATE_UNLOCKED
+ *      3) Event BoltActuatorStateChangeEvent
+ *      state = BOLT_STATE_EXTENDED
+ *      actuator_state = BOLT_ACTUATOR_STATE_LOCKING
+ *      locked_state = BOLT_LOCKED_STATE_UNLOCKED
+ *      blame = BOLT_BLAME_REMOTE_USER
+ *      userid = someuserid
+ *      4) Bolt extension completes
+ *      5) Notify
+ *      actuator_state = BOLT_ACTUATOR_STATE_OK
+ *      6) Event BoltActuatorStateChangeEvent
+ *      state = BOLT_STATE_EXTENDED
+ *      actuator_state = BOLT_ACTUATOR_STATE_OK
+ *      locked_state = BOLT_LOCKED_STATE_UNLOCKED
+ *      blame = BOLT_BLAME_REMOTE_USER
+ *      userid = someuserid
+ */
+message BoltLockTrait {
+  option (wdl.message_type) = TRAIT;
+  option (wdl.trait) = {
+    stability: ALPHA,
+    id: 0x0E02,
+    vendor_id: 0x0000,
+    version: 2
+  };
+
+/**
+   * The current state of the bolt itself
+   * Remember, this only tells you the state of the bolt itself and doesn't tell you
+   * anything about whether the door is locked (i.e. bolt is in jamb) or not.  To
+   * get the full picture you must look to information represented by the LockedState enum
+   *
+   * Implementors of this trait must implement all values below
+   */
+  enum BoltState {
+    BOLT_STATE_UNSPECIFIED = 0;
+    BOLT_STATE_RETRACTED = 1;       /// Bolt is fully retracted
+    BOLT_STATE_EXTENDED = 2;        /// Bolt is AT LEAST partially extended.
+  }
+
+  /**
+  *
+  * The method / UI interacting with the bolt lock
+  * Depending on the method originator may or may not be available
+  *
+  */
+  enum BoltLockActorMethod {
+    BOLT_LOCK_ACTOR_METHOD_UNSPECIFIED = 0;
+
+    /**
+      * Change produced by an unspecified entity that doesn't fall into one of the defined categories below
+      *  - Who may not be present
+      *  - Expected to be correlated with an event
+      */
+    BOLT_LOCK_ACTOR_METHOD_OTHER = 1;
+
+    /// On-device actor methods
+    /**
+      * Change produced by the physical interaction on the lock but with no PIN entered (Typically for locking or unlocking with the thumb turn)
+      *  - Who MUST NOT be present
+      */
+    BOLT_LOCK_ACTOR_METHOD_PHYSICAL = 2;
+
+    /**
+      * Change produced by the physical keypad by typing in a PIN
+      *  - Who MUST be present
+      *  - Expected to be correlated with an event that represents "keypad pin entered successfully" (see PinCodeInputTrait for an example event)
+      */
+    BOLT_LOCK_ACTOR_METHOD_KEYPAD_PIN = 3;
+
+    /**
+      * Change produced by the device internally. For instance, if the device has a mechanisim to automatically lock
+      * after a period of time.
+      * - Who may not be present.
+    */
+    BOLT_LOCK_ACTOR_METHOD_LOCAL_IMPLICIT = 4;
+
+    /// App actor methods
+    /**
+      * Change produced by a user using the app
+      *  - Who may not be present
+      */
+    BOLT_LOCK_ACTOR_METHOD_REMOTE_USER_EXPLICIT = 5;
+
+    /**
+      * Change produced by a user with implicit intent
+      * ex. Toggling structure mode with the app mode switcher
+      *  - Who may not be present
+      *  - Expected to be correlated with a structure mode change event?
+      */
+    BOLT_LOCK_ACTOR_METHOD_REMOTE_USER_IMPLICIT = 6;
+
+    /**
+      * Change produced by a user that does not fit in one of the
+      * other app remote categories
+      */
+    BOLT_LOCK_ACTOR_METHOD_REMOTE_USER_OTHER = 7;
+
+    /// Other actor methods
+    /**
+      * Change produced by a remote service with no user intent (ex: Goose)
+      *  - Who may not be present
+      *  - Expected to be correlated with an event (???)
+      */
+    BOLT_LOCK_ACTOR_METHOD_REMOTE_DELEGATE = 8;
+
+    /**
+      * Lock will (???) on its own before a critically low battery shutdown
+      */
+    BOLT_LOCK_ACTOR_METHOD_LOW_POWER_SHUTDOWN = 9;
+
+    /**
+      * Change produced through a voice assistant based surface
+      */
+    BOLT_LOCK_ACTOR_METHOD_VOICE_ASSISTANT = 10 [(wdl.enumvalue) = {compatibility: {min_version: 2}}];
+  }
+
+  /**
+   * Common construction of 'blames'.
+   * How an action was taken and by whom.
+   *
+   */
+  message BoltLockActorStruct {
+    option (wdl.message_type) = STRUCT;
+
+    /// how an action was taken
+    BoltLockActorMethod method = 1;
+
+    /// originator of the action, if available
+    weave.common.ResourceId originator = 2 [(wdl.prop) = {nullable: true}];
+
+    // Resource that took action on behalf of the originator
+    weave.common.ResourceId agent = 3 [(wdl.prop) = {nullable: true, compatibility: {min_version: 2}}];
+  }
+
+  /**
+   * The current actuator state
+   * Implementors of this trait must at a minimum be able to report:
+   * - BOLT_ACTUATOR_STATE_OK
+   * - BOLT_ACTUATOR_STATE_LOCKING
+   * - BOLT_ACTUATOR_STATE_UNLOCKING
+   * - BOLT_ACTUATOR_STATE_MOVING
+   */
+  enum BoltActuatorState {
+    BOLT_ACTUATOR_STATE_UNSPECIFIED = 0;
+    BOLT_ACTUATOR_STATE_OK = 1;         /// Actuator is not moving and is in a fully settled position.  If its not settled use BOLT_ACTUATOR_STATE_MOVING
+    BOLT_ACTUATOR_STATE_LOCKING = 2;    /// Actuator is attempting to lock
+    BOLT_ACTUATOR_STATE_UNLOCKING = 3;  /// Actuator is attempting to unlock
+    /** Actuator is moving though it’s not necessarily clear the intended direction
+     * This is typically used when the user is physically manipulating the bolt
+     */
+    BOLT_ACTUATOR_STATE_MOVING = 4;
+    BOLT_ACTUATOR_STATE_JAMMED_LOCKING = 5;     /// Actuator jammed while the device was locking and cannot move.
+    BOLT_ACTUATOR_STATE_JAMMED_UNLOCKING = 6;   /// Actuator jammed while the device was unlocking and cannot move.
+    BOLT_ACTUATOR_STATE_JAMMED_OTHER = 7;       /// Actuator jammed and cannot move. The direction the lock was moving was not provided.
+  }
+
+  /**
+   * The current locked state of the bolt lock as a whole
+   * This state takes into account the resource's best ability to determine how physically secure
+   * the resource is with respect to this bolt lock
+   *
+   * Implementors of this trait must at a minimum be able to report:
+   * - LOCKED_STATE_UNKNOWN
+   */
+  enum BoltLockedState {
+    BOLT_LOCKED_STATE_UNSPECIFIED = 0;
+    /** The lock as a whole is not locked to the best knowledge of the implementor.
+     * i.e. the door that this lock is attached to can be opened
+     */
+    BOLT_LOCKED_STATE_UNLOCKED = 1;
+    /** The lock as a whole is locked to the best knowledge of the implementor.
+     *  i.e. the door that this lock is attached to cannot be opened
+     */
+    BOLT_LOCKED_STATE_LOCKED = 2;
+    /** The implementor is not able to determine whether the door is locked or unlocked.
+     *  i.e. "Locked" sensing is based on a history of readings and that history is now gone or lost
+     */
+    BOLT_LOCKED_STATE_UNKNOWN = 3;
+  }
+
+  // ----------- PROPERTIES ----------- //
+
+  option (wdl.properties) = {
+    extendable: true,
+    reserved_tag_min: 1,
+    reserved_tag_max: 31
+  };
+
+  /// The current state of the bolt itself
+  /// Remember this only tells you about the bolt state not about the locked state of the lock as a whole
+  /// The lock as a whole is only fully secure if bolt_state == BOLT_STATE_EXTENDED AND locked_state == LOCKED_STATE_LOCKED
+  ///
+  /// If state == BOLT_STATE_RETRACTED
+  /// - actuator_state must be BOLT_ACTUATOR_STATE_OK or BOLT_ACTUATOR_STATE_JAMMED
+  /// - locked_state must be LOCKED_STATE_UNLOCKED or LOCKED_STATE_UNKNOWN
+  /// If state == BOLT_STATE_EXTENDED
+  /// - actuator_state may be any value
+  /// - locked_state may be any
+  BoltState state = 1;
+
+  /// The current state of the bolt's actuator
+  BoltActuatorState actuator_state = 2 [(wdl.prop) = {writable: READ_ONLY}];
+
+  /// The current state of how secure the lock is as whole
+  BoltLockedState locked_state = 3 [(wdl.prop) = {writable: READ_ONLY}];
+
+  /// Describes who/what last caused the bolt actuator state to change and how they did it.
+  /// Should be updated together whenever locked_state is changed, i.e. via BoltLockChangeRequest
+  BoltLockActorStruct bolt_lock_actor = 4 [(wdl.prop) = {writable: READ_ONLY, nullable: true, ephemeral: true}];
+
+  /// The time at which the lock state was changed.
+  /// Updated together with locked_state
+  google.protobuf.Timestamp locked_state_last_changed_at = 5 [(wdl.prop) = {writable: READ_ONLY,
+                                                        timestamp_constraints: {signed: true,
+                                                        precision: 0.001, width: 64},
+                                                        nullable: true,
+                                                        ephemeral: true}];
+
+  // ----------- COMMANDS ----------- //
+
+  /**
+   * Command to request a change to bolt state
+   * Should be used when with explicit or implicit user intent
+   * Returns success when execution of the command has begun
+   * Returns error if the command cannot be started
+   */
+  message BoltLockChangeRequest {
+    option (wdl.message_type) = COMMAND;
+    option (wdl.command) = {
+      id: 0x01,
+    };
+
+    /// New requested state of the bolt
+    BoltState state = 1;
+
+    /// Describes who/what is sending the BoltLockChangeRequest and reason for the request.
+    BoltLockActorStruct bolt_lock_actor = 4;
+  }
+
+  // ----------- EVENTS ----------- //
+  /**
+   * Event that is sent whenever actuator_state changes
+   * See BoltLockActorMethod enum above for information on when to fill in "who" below and potential
+   * correlated events
+   */
+  message BoltActuatorStateChangeEvent {
+    option (wdl.message_type) = EVENT;
+    option (wdl.event) = {
+      id: 1,
+      event_importance: EVENT_IMPORTANCE_PRODUCTION_CRITICAL
+    };
+
+    /// See BoltLockTrait for description
+    BoltState state = 1;
+
+    /// See BoltLockTrait for description
+    BoltActuatorState actuator_state = 2;
+
+    /// See BoltLockTrait for description
+    BoltLockedState locked_state = 3;
+
+    /// Describes who/what last caused the bolt actuator state to change and how they did it.
+    /// Should be updated together whenever locked_state is changed, i.e. via BoltLockChangeRequest
+    BoltLockActorStruct bolt_lock_actor = 4;
+  }
+}

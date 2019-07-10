@@ -1,0 +1,164 @@
+/*
+ *
+ *    Copyright (c) 2019 Google LLC.
+ *    Copyright (c) 2016-2018 Nest Labs, Inc.
+ *    All rights reserved.
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
+
+/**
+ *    @file
+ *      This file defines the User NFC Token Management trait.
+ *
+ *      This trait is a user-level trait. NFC tokens will have a user
+ *      or guest identifier and device/node identifier.
+ *
+ *      The trait defines commands like transfer, disablement,
+ *      unpairing, and structure authorization which are used to
+ *      update this trait. The trait also features an event which may
+ *      be used by downstream services.
+ */
+
+syntax = "proto3";
+
+package weave.trait.security;
+
+import "wdl/wdl_options.proto";
+import "weave/common/identifiers.proto";
+import "weave/trait/security/user_nfc_tokens_trait.proto";
+
+
+option java_outer_classname = "WeaveInternalUserNFCTokenManagementTrait";
+option objc_class_prefix = "SCM";
+
+/**
+ * NFC User token   management trait - a list of token devices
+ */
+message UserNFCTokenManagementTrait {
+  option (wdl.message_type) = TRAIT;
+  option (wdl.trait) = {
+  stability: PROD,
+  id: 0x0E10,
+  vendor_id: 0x0000,
+  version: 1
+  };
+
+
+// ----------- COMMANDS ----------- //
+  /**
+    *  Command to transfer a single NFC Token  from user A to User B
+    *  Example UserA details are in the auth header and UserB id is given in user_id field
+    *  User A details in auth header is transfer initiating user and need not be owner of the
+    *  device (in case of token transfer from guest to another user)
+    *  UserB is target  nest userId or guest userId.
+    *  for a guest user, structure authorization will based on the structure that the guest belongs to
+    */
+  message TransferUserNFCTokenRequest {
+    option (wdl.message_type) = COMMAND;
+    option (wdl.command) = {
+      id: 0x01
+    };
+
+    /// nest user id or guest id the NFC Token  is being transferred to
+    weave.common.ResourceId target_user_id = 1;
+
+    ///NFC token  id being transferred
+    weave.common.ResourceId token_device_id = 2 [(wdl.param) = {resource_type: RESOURCE_TYPE_DEVICE}];
+  }
+
+
+  /**
+   * Command to disable or enable a single NFC Token  across device's owner's structures
+   * auth token in the header indicates initiating user (not necessarily the owner)
+   */
+   message SetUserNFCTokenEnableStateRequest {
+     option (wdl.message_type) = COMMAND;
+     option (wdl.command) = {
+      id: 0x02
+     };
+
+     /// NFC Token being enable or disabled
+     weave.common.ResourceId token_device_id = 1 [(wdl.param) = {resource_type: RESOURCE_TYPE_DEVICE}];
+
+     /**
+       * enabled  field defines if NFC Token  is enabled  or vice versa
+       * to disable a token device across structures of the owner, set enabled = false else set  enabled = true
+       */
+     bool enabled = 2;
+   }
+
+
+    /**
+      * Command to authorize/deauthorize a single
+      * TokenDevice on a structure
+      * If user A already has authorization for A, B, C, D and this command deauthorizes A,
+      * only auth for A gets modified and B,C, D remain unchanged.
+      * auth token in the header indicates initiating user (Owner)
+      */
+    message AuthUserNFCTokenToStructureRequest {
+      option (wdl.message_type) = COMMAND;
+      option (wdl.command) = {
+        id: 0x03
+      };
+
+      ///NFC Token id being authorized for a structure
+      weave.common.ResourceId token_device_id = 1 [(wdl.param) = {resource_type: RESOURCE_TYPE_DEVICE}];
+      /**
+       * authorization type defines if NFC Token  is authorized to be used in a structure
+       * to remove authorization to use NFC Token  on a structure  set authorized = false else set  authorized = true
+       */
+      bool authorized = 2;
+      ///structure id the token devive is going to be authorized on
+      weave.common.ResourceId structure_id = 3 [(wdl.param) = {resource_type: RESOURCE_TYPE_STRUCTURE}];
+    }
+
+
+    // ----------- EVENTS ----------- //
+
+    /**
+      * These events are useful for history and analysis
+      * of NFC Token user management actions. The following enum defines all the events that can be logged:
+      */
+
+    enum NFCTokenEvent {
+        NFC_TOKEN_EVENT_UNSPECIFIED = 0;
+        NFC_TOKEN_EVENT_PAIRED = 1; /**< NFC Token is paired */
+        NFC_TOKEN_EVENT_UNPAIRED = 2; /**< NFC Token is unpaired */
+        NFC_TOKEN_EVENT_STRUCTURE_AUTH = 3; /**< NFC Token is authorized on structures */
+        NFC_TOKEN_EVENT_STRUCTURE_UNAUTH = 4; /**< NFC Token authorization is removed on structures */
+        NFC_TOKEN_EVENT_TRANSFERRED = 5; /**< NFC Token is tranferred to another user*/
+        NFC_TOKEN_EVENT_DISABLED = 6; /**< NFC Token is diabled for a user*/
+        NFC_TOKEN_EVENT_ENABLED = 7; /**< NFC Token is enabled for a user*/
+    }
+
+    /// service receives user initiated management action for a NFC Token
+    message UserNFCTokenManagementEvent {
+        option (wdl.message_type) = EVENT;
+        option (wdl.event) = {
+            id: 1,
+            event_importance: EVENT_IMPORTANCE_PRODUCTION_STANDARD
+        };
+
+        ///  User management action that happened
+        NFCTokenEvent nfc_token_management_event = 1;
+        /// action data
+        UserNFCTokensTrait.UserNFCTokenData  user_nfc_token = 2;
+        /// initiating user
+        weave.common.ResourceId initiating_user_id = 3 [(wdl.param) = {resource_type: RESOURCE_TYPE_USER}];
+        /// previous user
+        weave.common.ResourceId previous_user_id = 4;
+    }
+}
+
+

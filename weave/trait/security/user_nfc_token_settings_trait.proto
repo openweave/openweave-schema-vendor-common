@@ -1,0 +1,87 @@
+/*
+ *
+ *    Copyright (c) 2019 Google LLC.
+ *    Copyright (c) 2016-2018 Nest Labs, Inc.
+ *    All rights reserved.
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
+
+/**
+ *    @file
+ *      This file defines the User NFC Token Settings trait.
+ *
+ *      The trait contains a dictionary of token device/node
+ *      identifiers and the public keys. NFC tokens will have a user
+ *      or guest identifier and device/node identifier.
+ *
+ *      Trait Change Scenarios:
+ * 
+ *        1. Publisher receives updated token device details (can be
+ *           a result of pairing, transfer, diablement, deletion, etc.).
+ *        2. Publisher updates the trait based on the above scenarios.
+ *
+ */
+
+syntax = "proto3";
+
+package weave.trait.security;
+
+import "wdl/wdl_options.proto";
+import "weave/common/identifiers.proto";
+
+
+option java_outer_classname = "WeaveInternalUserNFCTokenSettingsTrait";
+option objc_class_prefix = "SCM";
+
+/**
+ * User NFC Token   Settings trait - a dictionary of NFC Tokens
+ */
+message UserNFCTokenSettingsTrait {
+  option (wdl.message_type) = TRAIT;
+  option (wdl.trait) = {
+  stability: PROD,
+  id: 0x0E0F,
+  vendor_id: 0x0000,
+  version: 1
+  };
+
+ /**
+  * the actual Token device data with public key
+  * This includes Nest user id. Device needs to use this userId when emitting events and logs
+  */
+
+  message UserNFCToken {
+    /// nest user id or guest id
+    weave.common.ResourceId user_id = 1;
+
+    ///token device id
+    weave.common.ResourceId token_device_id = 2 [(wdl.prop) = {resource_type: RESOURCE_TYPE_DEVICE}];
+
+    ///NFC card public key bytes
+    bytes public_key = 3;
+
+  }
+
+  // ----------- PROPERTIES ----------- //
+  option (wdl.properties) = {
+      writable: READ_ONLY;
+   };
+
+   /**
+    * set of token devices. Map key is uniquely mapped to unique token device id -  a user can have multiple token devices
+    */
+   map <uint32, UserNFCToken> user_nfc_tokens = 1 [(wdl.keyprop) = {uint_constraints: {width: 16}}];
+}
+
+

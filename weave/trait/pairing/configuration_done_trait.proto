@@ -1,0 +1,67 @@
+/*
+ *
+ *    Copyright (c) 2019 Google LLC.
+ *    Copyright (c) 2016-2018 Nest Labs, Inc.
+ *    All rights reserved.
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
+
+/**
+ *    @file
+ *      This file specifies a Weave Common trait that generalizes
+ *      a mechanism for applications to track whether they have
+ *      completed upload of initial configuration settings.
+ *
+ */
+
+syntax = "proto3";
+
+package weave.trait.pairing;
+
+import "wdl/wdl_options.proto";
+
+option java_outer_classname = "WeaveInternalConfigurationDoneTrait";
+option objc_class_prefix = "SCM";
+
+/**
+ *  @brief
+ *    Configuration Done Trait
+ *
+ *  A Weave Common service published trait that provides a means for an
+ *  application to indicate that initial configuration setting is complete. It
+ *  does not indicate whether the settings have been applied on a device or
+ *  not.
+ *
+ *  The consumer of this information is any actor driving pairing flows.
+ *
+ */
+message ConfigurationDoneTrait {
+  option (wdl.message_type) = TRAIT;
+
+  option (wdl.trait) = {
+    stability: PROD,
+    vendor_id: 0x0000,
+    id:        0x1401,
+    version:   1
+  };
+
+  // ----------- PROPERTIES ----------- //
+
+  /// Indicates whether initial configuration has been successfully uploaded.
+  bool app_configuration_complete = 1;
+
+  /// Indicates service view that device is ready for external interactions.
+  bool device_ready = 2;
+};
+

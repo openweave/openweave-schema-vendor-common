@@ -1,0 +1,69 @@
+/*
+ *
+ *    Copyright (c) 2019 Google LLC.
+ *    Copyright (c) 2016-2018 Nest Labs, Inc.
+ *    All rights reserved.
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
+
+/**
+ *    @file
+ *      This file specifies a Weave Common trait that generalizes the
+ *      information corresponding to the dynamic state of a * network
+ *      interface provisioned for a resource.
+ */
+
+syntax = "proto3";
+package weave.trait.network;
+import "wdl/wdl_options.proto";
+
+option java_outer_classname = "WeaveInternalNetworkInterfaceTrait";
+option objc_class_prefix = "SCM";
+
+
+/**
+ * @brief   Network interface trait
+ *
+ * @note
+ *  Every device resource provides one or more instances of a derived type of the network interface trait, e.g. for a Wi-Fi™
+ *  network interface, a Thread™ network interface, et cetera, which are derived from a basis trait including the properties,
+ *  events and functions common to all network interface traits.
+ */
+message NetworkInterfaceTrait {
+    option (wdl.message_type) = TRAIT;
+    option (wdl.trait) = {
+      stability: PROD,
+        vendor_id:  0x0000,
+        id:         0x0b02,
+        version:    1,
+        extendable: true
+    };
+
+    // ----------- PROPERTIES ----------- //
+    option (wdl.properties) = {
+        extendable: true,
+        reserved_tag_min: 1,
+        reserved_tag_max: 31,
+        writable: READ_ONLY
+    };
+
+    /** Value is \c true if the network interface is operating in a state where communicating with a remote host is possible. */
+    bool is_online = 1;
+
+    /** If the network interface has one, the IEEE 802.1 standard EUI-48 or EUI-64 media access (MAC) address. */
+    bytes mac_address = 2 [(wdl.prop) = { optional: true; }];
+
+    /** A possibly empty list of IP addresses (all IPv6, with IPv4 addresses listed in IPv4 Compatible format). */
+    repeated bytes ip_addresses = 3;
+}

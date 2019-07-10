@@ -1,0 +1,84 @@
+/*
+ *
+ *    Copyright (c) 2019 Google LLC.
+ *    Copyright (c) 2016-2018 Nest Labs, Inc.
+ *    All rights reserved.
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
+
+/**
+ *    @file
+ *      This file specifies a Weave Common trait that generalizes how
+ *      any Weave device resource presents information pertaining to
+ *      its software components (such as audio packages).
+ */
+
+syntax = "proto3";
+
+package weave.trait.description;
+
+import "wdl/wdl_options.proto";
+
+
+option java_outer_classname = "WeaveInternalSoftwareComponentTrait";
+option objc_class_prefix = "SCM";
+
+/**
+ *  @brief
+ *    Software Component
+ *
+ *  A Weave Common trait that generalizes how any Weave device
+ *  resource presents software components common to any such device
+ *  resource, including components such as audio.
+ *
+ */
+message SoftwareComponentTrait {
+    option (wdl.message_type) = TRAIT;
+    option (wdl.trait) = {
+        stability:        PROD,
+        vendor_id:        COMMON,
+        id:               0x001E,
+        version:          1,
+    };
+
+
+    // ----------- PROPERTIES ----------- //
+    option (wdl.properties) = {
+        variability:      DYNAMIC,
+        writable:         READ_ONLY,
+        reserved_tag_min: 1,
+        reserved_tag_max: 63
+    };
+
+    /**
+     *  The Software Component Type Struct is a struct
+     *  containing the UTF-8 strings representating the
+     *  type of software package as well as the version.
+     *
+     */
+    message SoftwareComponentTypeStruct {
+        option (wdl.message_type) = STRUCT;
+
+        string component_name = 1;
+        string component_version = 2;
+    }
+
+    /**
+     *  The Software Componetns property is an array of
+     *  of SoftwareComponentTypeStruct representing the
+     *  software components on a resource.
+     *
+     */
+    repeated SoftwareComponentTypeStruct software_components = 1;
+}

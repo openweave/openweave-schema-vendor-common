@@ -1,0 +1,78 @@
+/*
+ *
+ *    Copyright (c) 2019 Google LLC.
+ *    Copyright (c) 2016-2018 Nest Labs, Inc.
+ *    All rights reserved.
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
+
+/**
+ *    @file
+ *      This file specifies a Weave Common trait that generalizes the
+ *      information corresponding to the list of network interfaces
+ *      provisioned for a resource.
+ *
+ */
+
+syntax = "proto3";
+package weave.trait.network;
+import "wdl/wdl_options.proto";
+
+option java_outer_classname = "WeaveInternalNetworkInterfacesTrait";
+option objc_class_prefix = "SCM";
+
+/**
+ * @brief   Network interface list trait
+ *
+ * @note
+ *  Every device resource in the Nest Weave ecosystem provides exactly one instance of the network interfaces trait, which defines
+ *  the properties, functions and events representing the capability and dynamic state of a host with at least one network
+ *  interface to a data telecommunication network.
+ */
+message NetworkInterfacesTrait {
+    option (wdl.message_type) = TRAIT;
+    option (wdl.trait) = {
+      stability: ALPHA,
+        vendor_id:  0x0000,
+        id:         0x0b03,
+        version:    1
+    };
+
+    // ----------- PROPERTIES ----------- //
+    option (wdl.properties) = { writable: READ_ONLY };
+    
+    /**
+     * The \c network_interface_id_list property may be treated as <tt>variability: STATIC</tt> unless the value of this property
+     * is \c true.
+     */
+    bool is_network_interface_id_list_dynamic = 1 [(wdl.prop) = { variability: STATIC; }];
+    
+    /**
+     * The list of instance identifiers for each network interface capability and network interface trait instance pair
+     * corresponding to a network interface on the device.
+     */
+    repeated uint32 network_interface_id_list = 2;
+    
+    /**
+     * The instance identifier for the network interface capability and network interface trait instance pair corresponding to the
+     * network interface on the device used for the primary IPv4 default route, if present.
+     */
+    uint32 primary_network_interface_id_ipv4 = 3 [(wdl.prop) = { optional: true; }];
+    
+    /**
+     * The instance identifier for the network interface capability and network interface trait instance pair corresponding to the
+     * network interface on the device used for the primary IPv6 default route, if present.
+     */
+    uint32 primary_network_interface_id_ipv6 = 4 [(wdl.prop) = { optional: true; }];
+}

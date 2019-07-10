@@ -1,0 +1,107 @@
+/*
+ *
+ *    Copyright (c) 2019 Google LLC.
+ *    Copyright (c) 2016-2018 Nest Labs, Inc.
+ *    All rights reserved.
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
+
+/**
+ *    @file
+ *      This file specifies a Weave Common trait that lists a set of
+ *      resources that are relevant for a given resource based on
+ *      standard query.
+ *
+ */
+
+syntax = "proto3";
+
+package weave.trait.peerdevices;
+
+import "wdl/wdl_options.proto";
+import "weave/common/identifiers.proto";
+
+option java_outer_classname = "WeaveInternalPeerDeviceTrait";
+option objc_class_prefix = "SCM";
+
+/**
+ *  PeerDevices Trait
+ *  Lists a set of devices resources that are relevant to a given resource.  This
+ *  answers a standard query based on the type of the containing resource, which allows
+ *  a client to subscribe to that list and respond to changes.  The two initial queries
+ *  based on the resource of the trait are:
+ *
+ *    Structure Resource - all devices on the structure
+ *    Security Device - all devices that participate in security (locks and open/close sensors)
+ *
+ *  In the future this trait will include the static query that is actually being answered,
+ *  for example "All devices which implement a given set of interfaces".
+ *
+ *  This trait is intended to be published by a services controller.
+ */
+message PeerDevicesTrait {
+  option (wdl.message_type) = TRAIT;
+  option (wdl.trait) = {
+    stability: PROD,
+    id: 0x1301,
+    vendor_id: 0x0000,
+    version: 1
+  };
+
+  /**
+   *  A single peer device responded to for this device query.  Includes some
+   *  denormalized information available elsewhere, such as product id and
+   *  whether the device is available for interaction.
+   */
+  message PeerDevice {
+    /**
+     * Weave device id
+     */
+    weave.common.ResourceId device_id = 1 [(wdl.prop) = {resource_type: RESOURCE_TYPE_DEVICE}];
+
+    /**
+     * A fully qualified resource type name.
+     * For example, a Tahiti would be yale.resource.TahitiLockResource
+     */
+    weave.common.ResourceName resource_type_name = 2;
+
+    /// vendor id
+    uint32 vendor_id = 3 [(wdl.prop) = {uint_constraints: {width: 16}}];
+
+    /// product identifier part of weave certificate
+    uint32 product_id = 4 [(wdl.prop) = {uint_constraints: {width: 16}}];
+
+    /// Software version of the device
+    string software_version = 5 [(wdl.prop) = {string_constraints: {max_length: 32}}];
+
+    /// Indicates service view that device is ready for external interactions.
+    bool device_ready = 6;
+
+    /*
+     *
+     *  Deferred, once a query that requests interfaces is specified then this would indicate
+     *  which of those interfaces are actually implemented by a particular device.
+     */
+    // repeated InterfaceName selected_interface_ids = 7;
+
+  }
+
+  // ----------- PROPERTIES ----------- //
+  option (wdl.properties) = {
+    writable: READ_ONLY
+  };
+
+  /// set of peer devices. Map key is just a unique identifier for each device.
+  map <uint32, PeerDevice> peer_devices = 1 [(wdl.keyprop) = {uint_constraints: {width: 16}}];
+}

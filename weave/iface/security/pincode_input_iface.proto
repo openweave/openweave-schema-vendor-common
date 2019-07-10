@@ -1,0 +1,48 @@
+/*
+ *
+ *    Copyright (c) 2019 Google LLC.
+ *    Copyright (c) 2016-2018 Nest Labs, Inc.
+ *    All rights reserved.
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
+
+/**
+ *    @file
+ *      This file specifies a Weave Common interface for PIN code
+ *      input.
+ *
+ */
+
+syntax = "proto3";
+package weave.iface.security;
+
+option java_package="weave.security";
+option java_outer_classname = "WeaveInternalPincodeInputIface";
+option objc_class_prefix = "SCM";
+
+import "wdl/wdl_options.proto";
+import "weave/trait/security/pincode_input_trait.proto";
+import "weave/trait/security/pincode_input_settings_trait.proto";
+
+message PincodeInputIface {
+  option (wdl.message_type) = IFACE;
+  option (wdl.iface) = {
+    stability: ALPHA,
+    vendor_id: 0x0000,
+    version: 1
+  };
+
+  weave.trait.security.PincodeInputTrait lock = 1;
+  weave.trait.security.PincodeInputSettingsTrait lock_settings = 2;
+}

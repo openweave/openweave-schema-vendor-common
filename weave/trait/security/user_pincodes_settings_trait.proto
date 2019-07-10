@@ -1,0 +1,184 @@
+/*
+ *
+ *    Copyright (c) 2019 Google LLC.
+ *    Copyright (c) 2016-2018 Nest Labs, Inc.
+ *    All rights reserved.
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
+
+/**
+ *    @file
+ *      This file defines the User Pincode Trait.
+ *
+ *      The trait contains a dictionary of encrypted pincodes which
+ *      have a user or guess identifie and the actual, encrypted
+ *      pincode.
+ *
+ */
+
+syntax = "proto3";
+
+package weave.trait.security;
+
+import "wdl/wdl_options.proto";
+import "weave/common/identifiers.proto";
+import "google/protobuf/wrappers.proto";
+
+
+option java_outer_classname = "WeaveInternalUserPincodesSettingsTrait";
+option objc_class_prefix = "SCM";
+
+/**
+ * User Pincode Trait - a dictionary of pincodes
+ * @note for subscriber implementation : Device may have smaller userId
+ * - example uint 16 bit vs nest's uint64 bit
+ * in this case device implementation needs to map nest user Id to
+ * device internal user id. Device  logging events should have nest user id/guest  id
+ * If device is capable of using uint64 bit user id, it can
+ * directly use Nest User Id/Guest Id
+ * Devie also needs to Map map key to internal device user_id to keep track of new/modified/deleted items
+ * @note for publisher implementation: 64 bit user_id in UserPincode definition is publisher's unique user id.
+ * Publisher will have to map publisher's  user_id with unique map key and send new/modified/deleted items in map.
+ * since logs are generated from susbcriber side with publisher's unique user_id,
+ * a previously deleted map key can be reused for a new pincode addition
+ */
+message UserPincodesSettingsTrait {
+  option (wdl.message_type) = TRAIT;
+  option (wdl.trait) = {
+    stability: PROD,
+    id: 0x0E01,
+    vendor_id: 0x0000,
+    version: 1
+  };
+
+  /**
+   * the actual pincode itself
+   * This includes Nest user id. Device needs to use this userId when emitting events and logs
+   */
+
+  message UserPincode {
+    /// nest user id or guest id
+    weave.common.ResourceId user_id = 1;
+
+    ///encrypted pin bytes
+    bytes pincode = 2;
+
+    /// The pincode credential is null if the credential does not exist. Otherwise, it may be enabled
+    /// or disabled from the apps or via an associated schedule.
+    google.protobuf.BoolValue pincode_credential_enabled = 3 [(wdl.prop) = {nullable: true}];
+  }
+
+  // ----------- PROPERTIES ----------- //
+  option (wdl.properties) = {
+    writable: READ_ONLY;
+  };
+  /// set of pin codes
+  map <uint32, UserPincode> user_pincodes = 1 [(wdl.keyprop) = {uint_constraints: {width: 16}}];
+
+
+  /**
+   * error codes generated
+   */
+  enum PincodeErrorCodes {
+    PINCODE_ERROR_CODES_UNSPECIFIED = 0;
+    PINCODE_ERROR_CODES_DUPLICATE_PINCODE = 1; /**< Pincode sent already exists */
+    PINCODE_ERROR_CODES_TOO_MANY_PINCODES = 2; /**< Too many pincodes likely app exceeded the max pincode limit  */
+    PINCODE_ERROR_CODES_INVALID_PINCODE = 3; /**< Invalid pincode bytes likely because of device unable to decrypt*/
+    PINCODE_ERROR_CODES_SUCCESS_PINCODE_DELETED = 4; /**<  Pincode successfully deleted */
+    PINCODE_ERROR_CODES_SUCCESS_PINCODE_STATUS = 5; /**< Pincode successfully added */
+    PINCODE_ERROR_CODES_DUPLICATE_NONCE = 6; /**<  Nonce used in this pincode was already used. App has to regenerate the Pincode */
+    PINCODE_ERROR_CODES_EXCEEDED_RATE_LIMIT = 7; /**<  User exceeded  maximum allowed pincode change attempts (rate limiting)*/
+  }
+
+
+  // ----------- COMMANDS ----------- //
+  /** Set a pincode for a user, this creates/updates a single entry
+   * user_id can be nest user id or nest guest id
+   */
+  message SetUserPincodeRequest {
+    option (wdl.message_type) = COMMAND;
+    option (wdl.command) = {
+      id: 0x01,
+      completion_event: "SetUserPincodeResponse"
+    };
+
+    ///pincode either updated for an existing user or created for a brand new user
+    UserPincode  user_pincode = 1;
+  }
+
+
+  /**
+   * Response to setting a user's Pincode.
+   *
+   * TBD This goes away with generalized status return (since there are
+   * no other values returned)
+   */
+  message SetUserPincodeResponse {
+    option (wdl.message_type) = RESPONSE_EVENT;
+
+    /// TBD Remove when generalized status completed
+    PincodeErrorCodes status = 1;
+  }
+
+
+  /**
+   * Retrieve  visible pincode of a user
+   * This will return only guest passcode
+   * else empty response
+   */
+
+  message GetUserPincodeRequest {
+    option (wdl.message_type) = COMMAND;
+    option (wdl.command) = {
+      id: 0x02,
+      completion_event: "GetUserPincodeResponse"
+    };
+
+    weave.common.ResourceId user_id = 1;
+  }
+
+  /**
+   * Response to getting a user's Pincode.
+   */
+  message GetUserPincodeResponse {
+    option (wdl.message_type) = RESPONSE_EVENT;
+    UserPincode  user_pincode = 1;
+  }
+
+
+  /**
+   * Delete a single pincode in the list by user id
+   */
+  message DeleteUserPincodeRequest {
+    option (wdl.message_type) = COMMAND;
+    option (wdl.command) = {
+      id: 0x03,
+      completion_event: "DeleteUserPincodeResponse"
+    };
+
+    /// nest user_id or guest id
+    weave.common.ResourceId user_id = 1;
+  }
+
+
+  /**
+  * Response to deleting a user's Pincode.
+  */
+  message DeleteUserPincodeResponse {
+    option (wdl.message_type) = RESPONSE_EVENT;
+
+    /// TBD Remove when generalized status completed
+    PincodeErrorCodes status = 1;
+  }
+}

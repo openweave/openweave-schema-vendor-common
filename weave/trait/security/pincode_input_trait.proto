@@ -1,0 +1,127 @@
+/*
+ *
+ *    Copyright (c) 2019 Google LLC.
+ *    Copyright (c) 2016-2018 Nest Labs, Inc.
+ *    All rights reserved.
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
+
+/**
+ *    @file
+ *      This file defines the Pincode Input trait.
+ *
+ */
+
+syntax = "proto3";
+
+package weave.trait.security;
+
+import "wdl/wdl_options.proto";
+import "weave/common/identifiers.proto";
+import "google/protobuf/wrappers.proto";
+
+option java_outer_classname = "WeaveInternalPincodeInputTrait";
+option objc_class_prefix = "SCM";
+
+/**
+ * Trait for a pinpad entry for codes, including lockout and
+ * events about keycode entries.
+ */
+message PincodeInputTrait {
+  option (wdl.message_type) = TRAIT;
+  option (wdl.trait) = {
+    stability: PROD,
+    id: 0x0E05,
+    vendor_id: 0x0000,
+    version: 1
+  };
+
+  /**
+   * Reasons for failed attempts
+   */
+  enum PincodeEntryResult {
+    PINCODE_ENTRY_RESULT_UNSPECIFIED = 0;
+    PINCODE_ENTRY_RESULT_FAILURE_INVALID_PINCODE = 1; /**< Pincode entered does not exist ad is invalid*/
+    PINCODE_ENTRY_RESULT_FAILURE_OUT_OF_SCHEDULE = 2; /**< Pincode used outside the schedule time limits  */
+    PINCODE_ENTRY_RESULT_FAILURE_PINCODE_DISABLED = 3; /**< Pincode used is disabled  */
+    PINCODE_ENTRY_RESULT_SUCCESS =4; /**< Pincode entry successful  */
+  }
+
+  /**
+   * The state of input on the pincode. Used for Privacy Mode to disable input on the device.
+   */
+  enum PincodeInputState {
+    PINCODE_INPUT_STATE_UNSPECIFIED = 0;
+    PINCODE_INPUT_STATE_ENABLED = 1;
+    PINCODE_INPUT_STATE_DISABLED = 2;
+  }
+
+  // ----------- PROPERTIES ----------- //
+
+  /**
+   * The state of input for on the keypad for pincodes.
+   *
+   * For example, Linus Lock will disable pincode input when
+   * LinusLockPrivacyMode.privacy_mode_on is set to true.
+   */
+  PincodeInputState pincode_input_state = 1;
+
+  // ----------- EVENTS ----------- //
+
+  /// Event sent when a pincode is entered (valid or not)
+  message KeypadEntryEvent {
+    option (wdl.message_type) = EVENT;
+    option (wdl.event) = {
+      id: 1,
+      event_importance: EVENT_IMPORTANCE_PRODUCTION_CRITICAL
+    };
+    // go/caspian-phoenix-retention
+    option (datapol.msg_retention) = {context: "caspian", desired_retention: RT_2_YEARS};
+
+    /**
+     * Pincode enablement status
+     * The pincode credential can be null if the credential does not exist. Otherwise, it may be enabled
+     * or disabled from the apps or via an associated schedule.
+     */
+    google.protobuf.BoolValue pincode_credential_enabled = 1 [(wdl.param) = {nullable: true}];
+
+    /// Who used the pincode  or null if user not known
+    weave.common.ResourceId user_id = 2 [(wdl.param) = {nullable: true}];
+
+   /**
+    * If invalid, how many invalid codes have been entered so far.  Resets when a
+    * correct keycode is entered
+    */
+    uint32 invalid_entry_count = 3;
+
+    /// Pincode entry result
+    PincodeEntryResult pincode_entry_result = 4;
+  }
+
+  /// Event sent when the state of input (privacy mode) is changed.
+  message PincodeInputStateChangeEvent {
+    option (wdl.message_type) = EVENT;
+
+    option (wdl.event) = {
+       id: 2,
+       event_importance: EVENT_IMPORTANCE_PRODUCTION_CRITICAL
+     };
+
+    /// The state of input for pincodes. Disabled means the device is in privacy mode.
+    PincodeInputState pincode_input_state = 1;
+
+    /// Who is changing the privacy state change or null if not known
+    weave.common.ResourceId user_id = 2 [(wdl.param) = {resource_type: RESOURCE_TYPE_USER, nullable: true}];
+ }
+}

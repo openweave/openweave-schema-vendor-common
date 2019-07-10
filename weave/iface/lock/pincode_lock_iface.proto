@@ -1,0 +1,73 @@
+/*
+ *
+ *    Copyright (c) 2019 Google LLC.
+ *    Copyright (c) 2016-2018 Nest Labs, Inc.
+ *    All rights reserved.
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
+
+/**
+ *    @file
+ *      This file specifies a Weave Common interface for a PIN
+ *      code-actuated bolt lock.
+ *
+ */
+
+syntax = "proto3";
+package weave.iface.lock;
+
+option java_package="weave.lock";
+option java_outer_classname = "WeaveInternalPincodeLockIface";
+option objc_class_prefix = "SCM";
+
+import "wdl/wdl_options.proto";
+import "weave/iface/lock/basic_lock_iface.proto";
+import "weave/trait/security/bolt_lock_trait.proto";
+import "weave/trait/security/bolt_lock_settings_trait.proto";
+import "weave/trait/security/bolt_lock_capabilities_trait.proto";
+import "weave/trait/security/user_pincodes_settings_trait.proto";
+import "weave/trait/security/user_pincodes_capabilities_trait.proto";
+import "weave/trait/schedule/basic_user_schedules_settings_trait.proto";
+import "weave/trait/schedule/basic_user_schedules_capabilities_trait.proto";
+import "weave/trait/security/pincode_input_trait.proto";
+import "weave/trait/security/pincode_input_settings_trait.proto";
+import "weave/trait/auth/application_keys_trait.proto";
+
+message PincodeLockIface {
+  option (wdl.message_type) = IFACE;
+  option (wdl.iface) = {
+    stability: ALPHA,
+    vendor_id: 0x0000,
+    version: 1
+  };
+
+  weave.trait.security.BoltLockTrait lock = 1;
+  weave.trait.security.BoltLockSettingsTrait lock_settings = 2;
+  weave.trait.security.BoltLockCapabilitiesTrait lock_capabilities = 3;
+
+  weave.trait.security.UserPincodesSettingsTrait pincodes_settings = 4;
+  weave.trait.security.UserPincodesCapabilitiesTrait pincodes_capabilities = 5;
+
+  weave.trait.schedule.BasicUserSchedulesSettingsTrait schedules_settings = 6;
+  weave.trait.schedule.BasicUserSchedulesCapabilitiesTrait schedules_capabilities = 7;
+
+  weave.trait.security.PincodeInputTrait keypad = 8;
+  weave.trait.security.PincodeInputSettingsTrait keypad_settings = 9;
+
+  weave.trait.auth.ApplicationKeysTrait application_keys = 10;
+  message Implements {
+    option (wdl.message_type) = IFACE_IMPLEMENTATIONS;
+    weave.iface.lock.BasicLockIface basic_lock = 1;
+  }
+}

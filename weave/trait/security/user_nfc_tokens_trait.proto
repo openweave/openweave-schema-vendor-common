@@ -1,0 +1,93 @@
+/*
+ *
+ *    Copyright (c) 2019 Google LLC.
+ *    Copyright (c) 2016-2018 Nest Labs, Inc.
+ *    All rights reserved.
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
+
+/**
+ *    @file
+ *      This file defines the User NFC Tokens trait.
+ *
+ *      The trait contains a dictionary of device tokens and structure
+ *      information. NFC tokens will have a user or guest identifier
+ *      and device/node identifier.
+ *
+ *      Rules and constraints:
+ *
+ *        1. A single user can have multiple token devices.
+ *        2. A token device will only belong to one user at any time.
+ *        3. There will be no updates (writes) to this trait.
+ *
+ */
+
+syntax = "proto3";
+
+package weave.trait.security;
+
+import "wdl/wdl_options.proto";
+import "weave/common/identifiers.proto";
+import "weave/trait/security/user_nfc_token_metadata_trait.proto";
+
+option java_outer_classname = "WeaveInternalUserNFCTokensTrait";
+option objc_class_prefix = "SCM";
+
+/**
+ * NFC User tokens trait - a list of token devices
+ */
+message UserNFCTokensTrait {
+    option (wdl.message_type) = TRAIT;
+    option (wdl.trait) = {
+    stability: PROD,
+    id: 0x0E11,
+    vendor_id: 0x0000,
+    version: 1
+    };
+
+    /**
+     * Nest userIds and their token device ids
+     */
+    message UserNFCTokenData {
+        /// nest user id or guest id
+        weave.common.ResourceId user_id = 1;
+
+        ///token device id
+        weave.common.ResourceId token_device_id = 2 [(wdl.prop) = {resource_type: RESOURCE_TYPE_DEVICE}];
+
+        ///current status of the NFC Token
+        bool enabled = 3;
+
+        ///structure ids the token device is authorized on
+        repeated weave.common.ResourceId structure_ids = 4 [(wdl.prop) = {resource_type: RESOURCE_TYPE_STRUCTURE}];
+
+        ///nevis label information
+        string label = 5;
+
+        // serial number, tag number, etc.
+        weave.trait.security.UserNFCTokenMetadataTrait.Metadata metadata = 6;
+    }
+
+    // ----------- PROPERTIES ----------- //
+    option (wdl.properties) = {
+      writable: READ_ONLY;
+    };
+
+    /**
+     * set of NFC tokens  and the corresponding user ids.
+     */
+    repeated UserNFCTokenData user_nfc_tokens = 1;
+}
+
+

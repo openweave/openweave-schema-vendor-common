@@ -1,0 +1,89 @@
+/*
+ *
+ *    Copyright (c) 2019 Google LLC.
+ *    Copyright (c) 2016-2018 Nest Labs, Inc.
+ *    All rights reserved.
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
+
+/**
+ *    @file
+ *      This file specifies a Weave Common trait that expresses time
+ *      zone information for a resource in all supported formats
+ *      including a simple timestamp plus offset format and well-known
+ *      name format (for example, "America/Denver").
+ *
+ */
+
+syntax = "proto3";
+package weave.trait.time;
+
+import "wdl/wdl_options.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+
+option java_outer_classname = "WeaveInternalTimezoneTrait";
+option objc_class_prefix = "SCM";
+
+/**
+ *   @ brief Timezone information in all supported formats.
+ *
+ *   @note For Structures, only timezone_name is updatable to WDM clients
+ *      for changing the timezone. Other fields would be updated
+ *      synchronously before the update completes. Updating other fields
+ *      is considered an error. Setting timezone_name to NULL
+ *      and empty bytes means the timezone information is invalid.
+ */
+message TimezoneTrait {
+  option (wdl.message_type) = TRAIT;
+  option (wdl.trait) = {
+    stability: PROD,
+    id: 0x1103,
+    vendor_id: 0x0000,
+    version: 1
+  };
+
+  message UtcOffsetStruct {
+    /// Next switching point in the format of google.proto.Timestamp
+    google.protobuf.Timestamp start_timestamp = 1;
+
+    /// Number of minutes that has to be added to UTC to get local time
+    int32 offset_minutes = 2;
+  }
+
+  // ----------- PROPERTIES ----------- //
+  /*
+   *  @brief The timezone in IANA format (America/Denver).  Setting to NULL
+   *     indicates the timezone is unknown.
+   *
+   *  @note If supported, updating this field would trigger synchronous
+   *     timezone information regeneration for this whole trait, and
+   *     hence cause changes to other fields in this trait before the
+   *     update completes.
+   *
+   */
+  google.protobuf.StringValue timezone_name = 1 [(wdl.prop) = {nullable: true}];
+
+  /*
+   * Reserved for future posix representation, if needed
+   *  @brief The timezone in POSIX TZ format (EST+5EDT,M3.2.0/2,M11.1.0/2)
+   */
+  // string posix_tz = 2;
+
+  /*
+   *  @brief Set of current and future scheduled offsets between the
+   *     timezone and UTC
+   */
+  repeated UtcOffsetStruct utc_offsets = 3 [(wdl.prop) = {writable: READ_ONLY}];
+}

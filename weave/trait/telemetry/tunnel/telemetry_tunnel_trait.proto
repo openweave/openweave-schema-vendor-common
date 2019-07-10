@@ -1,0 +1,207 @@
+/*
+ *
+ *    Copyright (c) 2019 Google LLC.
+ *    Copyright (c) 2016-2018 Nest Labs, Inc.
+ *    All rights reserved.
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
+
+/**
+ *    @file
+ *      This file specifies a Weave Tunnel Telemetry trait that
+ *      specifies the various telemetry counters that are associated
+ *      with the Weave Tunnel.
+ *
+ */
+
+syntax = "proto3";
+
+package weave.trait.telemetry.tunnel;
+
+import "wdl/wdl_options.proto";
+import "google/protobuf/timestamp.proto";
+
+option java_outer_classname = "WeaveInternalTelemetryTunnelTrait";
+option objc_class_prefix = "SCM";
+
+/**
+ *  @brief
+ *    TelemetryTunnelTrait
+ *
+ *  A telemetry trait for the Weave Tunnel that specifies various
+ *  counters associated with the Weave Tunnel.
+ *
+ */
+message TelemetryTunnelTrait {
+  option (wdl.message_type) = TRAIT;
+
+  option (wdl.trait) = {
+      stability: PROD,
+      id: 0x1701,
+      vendor_id: 0x0000,
+      version: 1
+  };
+
+  option (wdl.properties) = {
+      writable: READ_ONLY,
+      extendable: true,
+      reserved_tag_min: 1,
+      reserved_tag_max: 31
+  };
+
+  /**
+   *  This represents an enumeration of the various Tunnel types
+   *  supported by Weave.
+   */
+  enum TunnelType {
+    option (wdl.enumopts) = {
+      extendable: false
+    };
+
+    TUNNEL_TYPE_UNSPECIFIED                = 0;
+
+    TUNNEL_TYPE_NONE                       = 1;
+
+    TUNNEL_TYPE_PRIMARY                    = 2; ///<A primary tunnel for transiting traffic between the device/fabric and the Service.
+
+    TUNNEL_TYPE_BACKUP                     = 3; ///<A secondary tunnel serving as an alternate route between the device/fabric and Service
+                                                /// in the event that no primary tunnel is available.
+
+    TUNNEL_TYPE_SHORTCUT                   = 4; ///<A tunnel setup between a mobile device and the border gateway when the mobile device
+                                                ///<is within the same WiFi network as the border gateway.
+  }
+
+  /**
+   *  This represents an enumeration of the various Tunneling states
+   *  supported by the WeaveTunnelAgent.
+   */
+  enum TunnelState {
+
+    option (wdl.enumopts) = {
+      extendable: false
+    };
+
+    TUNNEL_STATE_UNSPECIFIED                    = 0;
+
+    TUNNEL_STATE_NO_TUNNEL                      = 1;
+
+    TUNNEL_STATE_PRIMARY_ESTABLISHED            = 2; ///<Used to indicate that the Primary tunnel to the Service has been established.
+
+    TUNNEL_STATE_BACKUP_ONLY_ESTABLISHED        = 3; ///<Used to indicate that the Backup tunnel to the Service has been established.
+
+    TUNNEL_STATE_PRIMARY_AND_BACKUP_ESTABLISHED = 4; ///<Used to indicate that both the Primary and the Backup tunnel has been established.
+  }
+
+
+  /**
+   * Events associated with weave tunnel telemetry data
+   */
+
+  message TelemetryTunnelStatsEvent {
+    option (wdl.message_type) = EVENT;
+    option (wdl.event) = {
+      id: 1;
+      extendable: true,
+      reserved_tag_min: 1,
+      reserved_tag_max: 31,
+      event_importance: EVENT_IMPORTANCE_DEBUG
+    };
+
+    /*
+     *  Weave Tunnel Counters for the Tunnel.
+     *
+     *  Value of -1 indicates unavalable
+     */
+
+    /**
+     * This field holds the count of the number of bytes of data
+     * that transited over the Weave Tunnel to the Service.
+     *
+     */
+    uint64 tx_bytes_to_service = 1 [jstype = JS_STRING];
+
+    /**
+     * This field holds the count of the number of bytes of data
+     * that were received over the Weave Tunnel from the Service.
+     *
+     */
+    uint64 rx_bytes_from_service = 2 [jstype = JS_STRING];
+
+    /**
+     * This field holds the count of the number of messages
+     * that transited over the Weave Tunnel to the Service.
+     *
+     */
+    uint32 tx_messages_to_service = 3;
+
+    /**
+     * This field holds the count of the number of messages
+     * that were received over the Weave Tunnel to the Service.
+     *
+     */
+    uint32 rx_messages_from_service = 4;
+
+    /**
+     * This field holds the count of the number of times
+     * the Weave Tunnel to the Service went down from the
+     * perspective of the border gateway.
+     *
+     */
+    uint32 tunnel_down_count = 5;
+
+    /**
+     * This field holds the count of the number of times
+     * the border gateway attempted to connect the Weave Tunnel
+     * to the Service.
+     *
+     */
+    uint32 tunnel_conn_attempt_count = 6;
+
+    /**
+     * This field holds the last time the Weave Tunnel to the
+     * Service was recorded as being down.
+     *
+     */
+    google.protobuf.Timestamp last_time_tunnel_went_down = 7 [(wdl.param) = {timestamp_constraints: {signed: true,
+                                                                             precision: 0.001, width: 64}}];
+
+    /**
+     * This field holds the last time the Weave Tunnel was recorded
+     * as being established.
+     *
+     */
+    google.protobuf.Timestamp last_time_tunnel_established = 8 [(wdl.param) = {timestamp_constraints: {signed: true,
+                                                                               precision: 0.001, width: 64}}];
+
+    /**
+     * This field holds the count of the number of tunneled messages
+     * that were dropped at the border gateway.
+     *
+     */
+    uint32 dropped_messages_count = 9;
+
+    /**
+     * This field holds the current state of the active tunnel.
+     *
+     */
+    TunnelState current_tunnel_state = 10;
+
+    /**
+     * This field holds the type of the currently active tunnel.
+     *
+     */
+    TunnelType current_active_tunnel = 11;
+  }
+
+}

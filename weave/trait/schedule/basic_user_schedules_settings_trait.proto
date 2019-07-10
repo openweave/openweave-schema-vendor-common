@@ -1,0 +1,273 @@
+/*
+ *
+ *    Copyright (c) 2019 Google LLC.
+ *    Copyright (c) 2016-2018 Nest Labs, Inc.
+ *    All rights reserved.
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
+
+/**
+ *    @file
+ *      This file defines the Basic User Schedules Settings trait.
+ *
+ *      Note: The user or guest identifier may need to be mapped by
+ *      devices to device-specific identifiers where necessary.
+ *
+ */
+
+syntax = "proto3";
+
+package weave.trait.schedule;
+
+import "wdl/wdl_options.proto";
+import "weave/common/identifiers.proto";
+import "weave/common/time.proto";
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
+
+option java_outer_classname = "WeaveInternalBasicUserSchedulesSettingsTrait";
+option objc_class_prefix = "SCM";
+
+
+
+/**
+ * This is basic user schedule settings trait for managing when users
+ * are enabled with a basic set of schedule items.  Any users not
+ * included in this schedule are considered not enabled. User's Pincode needs to have schedule
+ * to be enabled
+ *
+ * Individual user's schedules should be managed using the set, get, and delete
+ * commands. The entire set of users with schedules can be observed
+ * with the map property.
+ *
+ * Schedule settings are managed for a subscriber via the map property
+ * and operators.  Publisher shall create a unique 16bit key in structure for the user
+ * and send it as map key. This value will be uniquely mapped on publisher side to nest user_id in a structure
+ * Receommndation for device implementation: map the nest user Id to internal user_id
+ * Devices also need to map the map key to internal user id to keep track of new/modified/ deleted items
+ * Deleting a pincode will require an update with the entire new table.
+ */
+message BasicUserSchedulesSettingsTrait {
+  option (wdl.message_type) = TRAIT;
+  option (wdl.trait) = {
+    stability: PROD,
+    id: 0x0D02,
+    vendor_id: 0x0000,
+    version: 1
+  };
+
+  /**
+   * Status codes for user schedule commands
+   */
+  enum ScheduleErrorCodes {
+    SCHEDULE_ERROR_CODES_UNSPECIFIED = 0;
+    SCHEDULE_ERROR_CODES_SUCCESS_STATUS = 1; /**< Schedule successfully added */
+    SCHEDULE_ERROR_CODES_DUPLICATE_ENTRY = 2; /**< Duplicate schedule presented */
+    SCHEDULE_ERROR_CODES_INDEX_OUT_OF_RANGE = 3; /**< Maximum allowed schedules crossed */
+    SCHEDULE_ERROR_CODES_EMPTY_SCHEDULE_ENTRY = 4; /**< Empty schedule is received */
+    SCHEDULE_ERROR_CODES_INVALID_SCHEDULE = 5; /**< Invalid schedule received*/
+  }
+
+/**
+   * Daily recurring schedule  will indicate allowed access in a day of the week and timespan in a day
+   * example: Monday Friday 2PM to 3PM
+   * Tuesday Thursday 1PM to 5PM
+   */
+  message DailyRepeatingScheduleItem {
+    /**
+     * Repeated Days of the week this schedule occurs. At least one
+     * day must be indicated for the schedule item to occur.
+     */
+    repeated weave.common.DayOfWeek days_of_week = 1;
+
+    /// Start time of this schedule item
+    weave.common.TimeOfDay start_time = 2;
+
+    /// How long this scheduled item remains in effect.
+    google.protobuf.Duration duration = 3 [(wdl.prop) = {duration_constraints: {signed: false, precision: 1, width: 32}}];
+  }
+
+
+  /**
+   *
+   * An absolute timebox schedule within which a user can be enabled
+   */
+
+  message TimeboxScheduleItem {
+
+    /**
+     * Time when the schedule becomes enabled for the user
+     */
+    google.protobuf.Timestamp start_time = 1 [(wdl.prop) =
+       {timestamp_constraints: {signed: false, precision: 1, width: 32}}];
+
+    /**
+     * Time beyond which the schedule becomes disabled for the user.
+     * Set to "null" to represent "no end time"
+     */
+    google.protobuf.Timestamp end_time = 2 [(wdl.prop) =
+       {timestamp_constraints: {signed: false, precision: 1, width: 32}, nullable: true}];
+  }
+
+
+
+  /**
+   * The enablement schedule for a single user, consisting of daily repeating
+   * schedule items that indicate when during the week a user is active, and
+   * timebox schedule items which constrain when in absolute time a user is
+   * enabled.
+   * If schedule items are empty then it implies that
+   * user has unlimited 24x7 access
+   */
+  message BasicUserSchedule {
+    /**
+     * User this schedule applies to
+     */
+    weave.common.ResourceId user_id = 1;
+
+    /**
+     * Set of daily repeating schedule items for this user.  If the list is
+     * empty then the user is enabled at all times of the week,
+     * still bounded by any timebox schedule items if exists
+     *
+     * The number of items is bounded by
+     * UserSchedulesCapabilitiesTrait.basic_max_daily_repeated_schedules_per_user
+     */
+    repeated DailyRepeatingScheduleItem daily_repeating_schedules = 2;
+
+    /**
+     * Set of timebox schedule items for this user.  These restrict in
+     * absolute times when this user is enabled.  If the list is empty
+     * then the user is always enabled, but still bounded by
+     * daily repeating schedule items if exists
+     *
+     * The number of items is bounded by
+     * UserSchedulesCapabilitiesTrait.basic_max_timebox_schedules_per_user
+     */
+
+    repeated TimeboxScheduleItem time_box_schedules = 3;
+  }
+
+  // ----------- PROPERTIES ----------- //
+  /// pincode dictionary
+  map <uint32, BasicUserSchedule>  basic_user_schedules= 1
+        [(wdl.keyprop) = {uint_constraints: {width: 16}}];
+
+
+  // ----------- COMMANDS ----------- //
+  /**
+   * Create or update user's schedule, This overwrites the entire
+   * schedule for this user
+   */
+  message SetUserScheduleRequest {
+    option (wdl.message_type) = COMMAND;
+    option (wdl.command) = {
+      id: 0x01,
+      completion_event: "SetUserScheduleResponse"
+    };
+    BasicUserSchedule  user_schedule = 2;
+  }
+
+
+  /**
+   * Response to setting a user's schedule.
+   *
+   * TBD This goes away with generalized status return (since there are
+   * no other values returned)
+   */
+  message SetUserScheduleResponse {
+      option (wdl.message_type) = RESPONSE_EVENT;
+
+      /// TBD Remove when generalized status completed
+      ScheduleErrorCodes status = 1;
+  }
+
+
+  /**
+   * GetUserScheduleRequest
+   * retrieve all visible schedules for a user
+   * getting guest schedules request can come form app
+   */
+  message GetUserScheduleRequest {
+    option (wdl.message_type) = COMMAND;
+    option (wdl.command) = {
+      id: 0x02,
+      completion_event: "GetUserScheduleResponse"
+    };
+    weave.common.ResourceId user_id = 1;
+  }
+
+
+  /**
+   * Response to getting a user's schedule.
+   */
+  message GetUserScheduleResponse {
+    option (wdl.message_type) = RESPONSE_EVENT;
+
+    /// TBD Remove when generalized status completed
+    ScheduleErrorCodes status = 1;
+
+    /// The returned schedule for the user
+    BasicUserSchedule user_schedule = 2;
+  }
+
+
+  /**
+   * DeleteUserScheduleRequest
+   *
+   * Delete a user's entire schedule, which implies the user is
+   * no longer enabled.
+   */
+
+  message DeleteUserScheduleRequest {
+    option (wdl.message_type) = COMMAND;
+    option (wdl.command) = {
+        id: 0x03,
+        completion_event: "DeleteUserScheduleResponse"
+    };
+    weave.common.ResourceId user_id = 1;
+  }
+
+
+  /**
+   * Response to deleting a user's schedule.
+   */
+  message DeleteUserScheduleResponse {
+      option (wdl.message_type) = RESPONSE_EVENT;
+
+      /// TBD Remove when generalized status completed
+      ScheduleErrorCodes status = 1;
+  }
+
+  // ----------- EVENTS ----------- //
+  /**
+   * Service-emitted event. This event is sent when an offline
+   * device goes online and receives new BasicUserSchedules
+   * that it missed while it was offline.
+   */
+  message OfflineDeviceSyncSchedulesEvent {
+    option (wdl.message_type) = EVENT;
+    option (wdl.event) = {
+      id: 1,
+      event_importance: EVENT_IMPORTANCE_PRODUCTION_CRITICAL
+    };
+
+    map<uint32, BasicUserSchedule> basic_user_schedules = 1;
+    google.protobuf.FieldMask state_mask = 2;
+    uint64 state_version = 3 [jstype = JS_STRING];
+    google.protobuf.Timestamp accepted_timestamp = 4;
+    google.protobuf.Timestamp confirmed_timestamp = 5;
+  }
+}

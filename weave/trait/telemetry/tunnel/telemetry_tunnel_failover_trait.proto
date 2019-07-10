@@ -1,0 +1,244 @@
+/*
+ *
+ *    Copyright (c) 2019 Google LLC.
+ *    Copyright (c) 2016-2018 Nest Labs, Inc.
+ *    All rights reserved.
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
+
+/**
+ *    @file
+ *      This file specifies the Weave Tunnel Telemetry trait when
+ *      Weave Tunnel failover is enabled.
+ *
+ */
+
+syntax = "proto3";
+
+package weave.trait.telemetry.tunnel;
+
+import "wdl/wdl_options.proto";
+import "google/protobuf/timestamp.proto";
+import "weave/trait/telemetry/tunnel/telemetry_tunnel_trait.proto";
+
+option java_outer_classname = "WeaveInternalTelemetryTunnelFailoverTrait";
+option objc_class_prefix = "SCM";
+
+/**
+ *  @brief
+ *    TelemetryTunnelFailoverTrait
+ *
+ *  A telemetry trait for the Weave Tunnel that specifies various
+ *  counters associated with the Weave Tunnel when failover is enabled.
+ *
+ */
+message TelemetryTunnelFailoverTrait {
+  option (wdl.message_type) = TRAIT;
+  option (wdl.trait) = {
+    stability: PROD,
+    id: 0x1702,
+    vendor_id: 0x0000,
+    version: 1
+  };
+  option (wdl.properties) = {
+    writable: READ_ONLY,
+    extendable: true,
+    reserved_tag_min: 1,
+    reserved_tag_max: 31
+  };
+
+  /**
+   * Events associated with weave tunnel failover telemetry data
+   */
+
+  message TelemetryTunnelFailoverStatsEvent {
+    option (wdl.message_type) = EVENT;
+    option (wdl.event) = {
+      id: 1;
+      extends: "weave.trait.telemetry.tunnel.TelemetryTunnelTrait.TelemetryTunnelStatsEvent",
+      extendable: true,
+      reserved_tag_min: 32,
+      reserved_tag_max: 63,
+      event_importance: EVENT_IMPORTANCE_DEBUG
+    };
+
+    /*
+     *  Weave Tunnel Counters when failover is enabled.
+     *
+     *  Value of -1 indicates unavalable
+     */
+
+    /* super event fields */
+
+    /**
+     * This field holds the count of the number of bytes of data
+     * that transited over the Weave Tunnel to the Service.
+     *
+     */
+    uint64 tx_bytes_to_service = 1 [jstype = JS_STRING];
+
+    /**
+     * This field holds the count of the number of bytes of data
+     * that were received over the Weave Tunnel from the Service.
+     *
+     */
+    uint64 rx_bytes_from_service = 2 [jstype = JS_STRING];
+
+    /**
+     * This field holds the count of the number of messages
+     * that transited over the Weave Tunnel to the Service.
+     *
+     */
+    uint32 tx_messages_to_service = 3;
+
+    /**
+     * This field holds the count of the number of messages
+     * that were received over the Weave Tunnel to the Service.
+     *
+     */
+    uint32 rx_messages_from_service = 4;
+
+    /**
+     * This field holds the count of the number of times
+     * the Weave Tunnel to the Service went down from the
+     * perspective of the border gateway.
+     *
+     */
+    uint32 tunnel_down_count = 5;
+
+    /**
+     * This field holds the count of the number of times
+     * the border gateway attempted to connect the Weave Tunnel
+     * to the Service.
+     *
+     */
+    uint32 tunnel_conn_attempt_count = 6;
+
+    /**
+     * This field holds the last time the Weave Tunnel to the
+     * Service was recorded as being down.
+     *
+     */
+    google.protobuf.Timestamp last_time_tunnel_went_down = 7 [(wdl.param) = {timestamp_constraints: {signed: true,
+                                                                             precision: 0.001, width: 64}}];
+
+    /**
+     * This field holds the last time the Weave Tunnel was recorded
+     * as being established.
+     *
+     */
+    google.protobuf.Timestamp last_time_tunnel_established = 8 [(wdl.param) = {timestamp_constraints: {signed: true,
+                                                                               precision: 0.001, width: 64}}];
+
+    /**
+     * This field holds the count of the number of tunneled messages
+     * that were dropped at the border gateway.
+     *
+     */
+    uint32 dropped_messages_count = 9;
+
+    /**
+     * This field holds the current state of the active tunnel.
+     *
+     */
+    weave.trait.telemetry.tunnel.TelemetryTunnelTrait.TunnelState current_tunnel_state = 10;
+
+    /**
+     * This field holds the type of the currently active tunnel.
+     *
+     */
+    weave.trait.telemetry.tunnel.TelemetryTunnelTrait.TunnelType current_active_tunnel = 11;
+
+    /* Failover counters */
+
+    /**
+     * This field holds the count of the number of bytes of data
+     * that transited over the Backup Weave Tunnel to the Service.
+     *
+     */
+    uint64 backup_tx_bytes_to_service = 32 [jstype = JS_STRING];
+
+    /**
+     * This field holds the count of the number of bytes of data
+     * that were received over the Backup Weave Tunnel from the
+     * Service.
+     *
+     */
+    uint64 backup_rx_bytes_from_service = 33 [jstype = JS_STRING];
+
+    /**
+     * This field holds the count of the number of messages
+     * that transited over the Backup Weave Tunnel to the
+     * Service.
+     *
+     */
+    uint32 backup_tx_messages_to_service = 34;
+
+    /**
+     * This field holds the count of the number of messages
+     * that were received over the Backup Weave Tunnel to
+     * the Service.
+     *
+     */
+    uint32 backup_rx_messages_from_service = 35;
+
+    /**
+     * This field holds the count of the number of times
+     * the Backup Weave Tunnel to the Service went down from the
+     * perspective of the border gateway.
+     *
+     */
+    uint32 backup_tunnel_down_count = 36;
+
+    /**
+     * This field holds the count of the number of times
+     * the border gateway attempted to connect the Backup Weave
+     * Tunnel to the Service.
+     *
+     */
+    uint32 backup_tunnel_conn_attempt_count = 37;
+
+    /**
+     * This field holds the last time the Backup Weave Tunnel to the
+     * Service was recorded as being down.
+     *
+     */
+    google.protobuf.Timestamp last_time_backup_tunnel_went_down = 38 [(wdl.param) = {timestamp_constraints: {signed: true,
+                                                                                     precision: 0.001, width: 64}}];
+
+    /**
+     * This field holds the last time the Backup Weave Tunnel was
+     * recorded as being established.
+     *
+     */
+    google.protobuf.Timestamp  last_time_backup_tunnel_established = 39 [(wdl.param) = {timestamp_constraints: {signed: true,
+                                                                                        precision: 0.001, width: 64}}];
+
+    /**
+     * This field holds the count of the number of times the Weave Tunnel
+     * failed over from Primary to Backup.
+     *
+     */
+    uint32 tunnel_failover_count = 40;
+
+    /**
+     * This field holds the last time the Weave Tunnel failed over
+     * from Primary to Backup.
+     *
+     */
+    google.protobuf.Timestamp last_time_for_tunnel_failover = 41 [(wdl.param) = {timestamp_constraints: {signed: true,
+                                                                                 precision: 0.001, width: 64}}];
+  }
+
+}

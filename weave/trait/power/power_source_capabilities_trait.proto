@@ -1,0 +1,282 @@
+/*
+ *
+ *    Copyright (c) 2019 Google LLC.
+ *    Copyright (c) 2016-2018 Nest Labs, Inc.
+ *    All rights reserved.
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
+
+/**
+ *    @file
+ *      This file specifies a Weave Common trait that generalizes how
+ *      any Weave device resource presents static, read-only power
+ *      source capabilities information common to any such device.
+ *
+ */
+
+syntax = "proto3";
+
+package weave.trait.power;
+
+import "wdl/wdl_options.proto";
+
+import "weave/common/string_ref.proto";
+import "google/protobuf/wrappers.proto";
+
+option java_outer_classname = "WeaveInternalPowerSourceCapabilitiesTrait";
+option objc_class_prefix = "SCM";
+
+/**
+ *  @brief
+ *    Power Source Capabilities
+ *
+ *  A Weave Common trait that allows vendors to enumerate static, read-only
+ *  basic properties about a power source in a device resource.
+ *
+ */
+message PowerSourceCapabilitiesTrait {
+        option (wdl.message_type) = TRAIT;
+
+        option (wdl.trait) = {
+          stability: PROD,
+                vendor_id: 0x0000,
+                id:        0x0018,
+                version:   1
+        };
+
+        /**
+         *  This represents an indication of the type or class of power source
+         *  for the trait instance published by a resource.
+         *
+         *  The type power source property enumeration should be extended by
+         *  entities outside of Nest Labs by adding the vendor identifier to
+         *  the high order 16-bits of the enumeration and then using the low
+         *  order 16-bits as the extended power source type.
+         */
+        enum PowerSourceType {
+                option (wdl.enumopts) = {
+                        extendable: true,
+                        reserved_tag_min: 1,
+                        reserved_tag_max: 31
+                };
+
+                POWER_SOURCE_TYPE_UNSPECIFIED         = 0;
+                POWER_SOURCE_TYPE_BATTERY             = 1;             ///< Battery (see the Battery Power Source trait)
+        }
+
+        /**
+         *  This represents the current type of the power source.
+         */
+        enum PowerSourceCurrentType {
+                option (wdl.enumopts) = {
+                        extendable: false
+                };
+
+                POWER_SOURCE_CURRENT_TYPE_UNSPECIFIED = 0;
+                POWER_SOURCE_CURRENT_TYPE_DC          = 1; ///< Direct Current
+                POWER_SOURCE_CURRENT_TYPE_AC          = 2; ///< Alternating Current
+        }
+
+        // ----------- PROPERTIES ----------- //
+
+        option (wdl.properties) = {
+                writable: READ_ONLY,
+                variability: STATIC,
+                extendable: true,
+                reserved_tag_min: 1,
+                reserved_tag_max: 31
+        };
+
+        /**
+         *  This is a required property representing an indication of
+         *  the type or class of power source for the trait instance
+         *  published by the resource.
+         *
+         *  This should be identical the type specified in the
+         *  analagous Power Source instance for this
+         *  power source.
+         *
+         */
+        PowerSourceType         type              = 1;
+
+        /**
+         *  This property is an optional property encoded as a UTF-8
+         *  String or unsigned fixed point number (string reference)
+         *  that describes the power source in a human-readable format
+         *  in the vendor's preferred language localization. This
+         *  value is assigned and administered by the vendor.
+         *
+         *  The UTF-8 String is used when the description is a
+         *  non-localized string literal. The string reference is used
+         *  when the string, localized or not, is located in a string
+         *  table associated with the device resource containing this
+         *  trait instance.
+         *
+         *  Absence of this property implies a NULL value and a NULL
+         *  value implies that the device resource has provided no
+         *  description of the power source.
+         *
+         */
+        weave.common.StringRef  description       = 2 [(wdl.prop) = { string_constraints: { max_length: 32 },
+                                                                      optional: true,
+                                                                      nullable: true}];
+
+        /**
+         *  This property is used to indicate the nominal output
+         *  voltage for a power source.
+         *
+         *  This value should match that printed on the regulatory
+         *  compliance label (typically displaying both nominal
+         *  voltage and maximum current) for the device resource
+         *  publishing the trait instance.
+         *
+         */
+        float                  nominal_voltage   = 3 [(wdl.prop) = { quantity_type: VOLTAGE,
+                                                                      number_constraints: { min: 0.0, max: 700.0,
+                                                                      precision: 0.001,
+                                                                      fixed_encoding_width: 32 }},
+                                                       (wdl.tlv)  = { encoding: FIXED } ];
+
+        /**
+         *  This optional property is used to indicate the maximum
+         *  current for a power source.
+         *
+         *  This value should match that printed on the regulatory
+         *  compliance label (typically displaying both nominal
+         *  voltage and maximum current) for the device resource
+         *  publishing the trait instance.
+         *
+         *  Absence of this property implies a NULL value and a NULL
+         *  value implies that the device resource has no known or
+         *  published maximum current.
+         *
+         */
+        google.protobuf.FloatValue                   maximum_current   = 4 [(wdl.prop) = { optional: true,
+                                                                      nullable: true,
+                                                                      quantity_type: CURRENT,
+                                                                      number_constraints: { min: 0.0, max: 1000.0,
+                                                                      precision: 0.001,
+                                                                      fixed_encoding_width: 32 }},
+                                                       (wdl.tlv)  = { encoding: FIXED } ];
+
+        /**
+         *  This property represents the current type of the power
+         *  source.
+         */
+        PowerSourceCurrentType  current_type      = 5;
+
+        /**
+         *  This property represents, as an unsigned integer in which
+         *  0 is the highest order (i.e. primary), 1 the next highest
+         *  (i.e. secondary), etc., the system usage order of a power
+         *  source.
+         *
+         *  This is used along with the Status property to determine
+         *  how a system that supports multiple power sources will use
+         *  them, either concurrently (many sources of the same order)
+         *  or serially (many sources of ascending order).
+         *
+         *  The following table provides some suggested examples for
+         *  assigning order to some sample power sources:
+         *
+         *  <table>
+         *  <tr>
+         *      <th>Sources</th>
+         *      <th>Order</th>
+         *      <th>Description</th>
+         *  </tr>
+         *  <tr>
+         *      <td>
+         *          Mains Power<br/>
+         *          Mains Power
+         *      </td>
+         *      <td>
+         *          0<br/>
+         *          0
+         *      </td>
+         *      <td>
+         *          Design with symmetric, dual-redundant mains power
+         *          sources. The system is powered by either one of the
+         *          power sources.
+         *      </td>
+         *  </tr>
+         *  <tr>
+         *      <td>
+         *          Built-in Battery Power<br/>
+         *          Mains Power
+         *      </td>
+         *      <td>
+         *          0<br/>
+         *          1
+         *      </td>
+         *      <td>
+         *          Design in which the system is always running from a
+         *          built-in battery and the mains power merely serves to
+         *          keep the battery charged unless the battery fails at
+         *          which point mains power would power the system.
+         *      </td>
+         *  </tr>
+         *  <tr>
+         *      <td>
+         *          Mains Power<br/>
+         *          Back-up Battery Power
+         *      </td>
+         *      <td>
+         *          0<br/>
+         *          1
+         *      </td>
+         *      <td>
+         *          Design in which the system is always running from a
+         *          mains power and the back-up battery is out-of-circuit
+         *          until mains power fails at which point the back-up
+         *          battery powers the system.
+         *      </td>
+         *  </tr>
+         *  <tr>
+         *      <td>
+         *          Built-in Battery Power<br/>
+         *          DC Adapter Power<br/>
+         *          USB Power
+         *      </td>
+         *      <td>
+         *          0<br/>
+         *          1<br/>
+         *          1
+         *      </td>
+         *      <td>
+         *          Design in which the system is always running from a built-
+         *          in battery and the mains or USB power merely serve to keep
+         *          the battery charged. If the battery fails, then either mains
+         *          or USB power would power the system.
+         *      </td>
+         *  </tr>
+         *  </table>
+         *
+         */
+        uint32                  order             = 6;
+
+        /**
+         *  This property indicates whether a power source is
+         *  removable, such as a battery or plug-in DC adapter.
+         *
+         */
+        bool                    removable         = 7;
+}
+
+
+
+
+
+
+

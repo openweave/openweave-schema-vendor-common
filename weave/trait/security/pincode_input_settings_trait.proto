@@ -1,0 +1,58 @@
+/*
+ *
+ *    Copyright (c) 2019 Google LLC.
+ *    Copyright (c) 2016-2018 Nest Labs, Inc.
+ *    All rights reserved.
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
+
+/**
+ *    @file
+ *      This file defines the Pincode Input Settings trait.
+ *
+ */
+
+syntax = "proto3";
+
+package weave.trait.security;
+
+import "google/protobuf/duration.proto";
+import "wdl/wdl_options.proto";
+
+option java_outer_classname = "WeaveInternalPincodeInputSettingsTrait";
+option objc_class_prefix = "SCM";
+
+/**
+ * Trait for a pinpad entry for codes, including lockout and
+ * events about keycode entries.
+ */
+message PincodeInputSettingsTrait {
+  option (wdl.message_type) = TRAIT;
+  option (wdl.trait) = {
+    stability: PROD,
+    id: 0x0E0B,
+    vendor_id: 0x0000,
+    version: 1
+  };
+
+  // ----------- PROPERTIES ----------- //
+  /// How many codes entered on the keypad before lockout
+  uint32 wrong_entry_code_limit = 1;
+
+  /// How long the keypad is locked out after invalid entries
+  google.protobuf.Duration wrong_entry_disable_time = 2 [(wdl.prop) = {duration_constraints: {signed: false,
+                                                                                              precision: 1,
+                                                                                              width: 32}}];
+
+}

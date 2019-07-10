@@ -1,0 +1,104 @@
+/*
+ *
+ *    Copyright (c) 2019 Google LLC.
+ *    Copyright (c) 2016-2018 Nest Labs, Inc.
+ *    All rights reserved.
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
+
+/**
+ *    @file
+ *      This file specifies a Weave Common trait that generalizes how
+ *      any resource presents the user interface localizations it
+ *      has available and how the current localization may be set or
+ *      changed to one of those available localizations.
+ *
+ *    @deprecated
+ *      This trait has been deprecated in lieu of the Locale Settings
+ *      and Locale Capabilities traits for all new resource
+ *      designs; however, the tag numbers and status codes have been
+ *      carried forward for those new traits.
+ *
+ */
+
+syntax = "proto3";
+
+package weave.trait.locale;
+
+import "wdl/wdl_options.proto";
+
+option java_outer_classname = "WeaveInternalLocaleTrait";
+option objc_class_prefix = "SCM";
+
+/**
+ * This specifies a Weave Common trait that generalizes how
+ * any resource presents the user interface localizations it has
+ * available and how the current localization may be set or changed
+ * to one of those available localizations. Localizations, in this
+ * context, are the translations of a resource's human-visible audible
+ * and visible interfaces into a different language for a specific
+ * country or region.
+ *
+ * @deprecated
+ *   This trait has been deprecated in lieu of the Locale Settings
+ *   and Locale Capabilities traits for all new resource
+ *   designs; however, the tag numbers and status codes have been
+ *   carried forward for those new traits.
+ *
+ */
+message LocaleTrait {
+  option (wdl.message_type) = TRAIT;
+
+  option (wdl.trait) = {
+    stability: PROD,
+    vendor_id: 0x0000,
+    id:        0x0011,
+    version:   1
+  };
+
+  /**
+   *  @brief
+   *    Locale Status Codes
+   *
+   *  These status codes should be returned in response to erroneous
+   *  update requests, where appropriate.
+   *
+   */
+  enum LocaleStatus {
+    LOCALE_STATUS_UNSPECIFIED              = 0x0000;
+    LOCALE_STATUS_NOT_SUPPORTED_OR_UNKNOWN = 0x0001; ///< The requested locale is not supported or is unknown to the device.
+    LOCALE_STATUS_IMPROPERLY_FORMATTED     = 0x0002;  ///< The requested locale is not a properly IETF BCP 47-formatted locale.
+  };
+
+  // ----------- PROPERTIES ----------- //
+  /**
+   *  The Active Locale property is a IETF BCP 47-Formatted UTF-8
+   *  String that indicates the current and active locale for
+   *  the trait instance.
+   *
+   */
+  // TODO: PHX-3833
+  string  active_locale = 1;
+
+  /**
+   *  The Available Locales property is an Array of IETF BCP
+   *  47-Formatted UTF-8 Strings, each of which indicates a
+   *  locale supported by the trait instance to which Active
+   *  Locale may be set.
+   *
+   */
+  // TODO: PHX-3833
+  repeated string available_locales = 2;
+}
+
