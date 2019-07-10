@@ -76,7 +76,7 @@ OpenWeave WDL "Common" Schema depends on WDLC. WDLC is available from
 # Need help?
 
 There are numerous avenues for OpenWeave support:
-* Bugs and feature requests — [submit to the Issue Tracker](https://github.com/openweave/openweave-core/issues)
+* Bugs and feature requests — [submit to the Issue Tracker](https://github.com/openweave/openweave-schema-vendor-common/issues)
 * Stack Overflow — [post questions using the openweave tag](http://stackoverflow.com/questions/tagged/openweave)
 * Google Groups — discussion and announcements at [openweave-users](https://groups.google.com/forum/#!forum/openweave-users)
 
