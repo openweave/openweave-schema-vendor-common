@@ -79,8 +79,6 @@ message LivenessTrait {
     version: 2,
     published_by: EXTERNAL
   };
-  // go/caspian-phoenix-retention
-  option (datapol.msg_retention) = {context: "caspian", desired_retention: RT_YEAR};
 
   // ----------- PROPERTIES ----------- //
   option (wdl.properties) = {
@@ -160,8 +158,6 @@ message LivenessTrait {
       id: 1,
       event_importance: EVENT_IMPORTANCE_PRODUCTION_CRITICAL
     };
-    // go/caspian-phoenix-retention
-    option (datapol.msg_retention) = {context: "caspian", desired_retention: RT_YEAR};
 
     /// The current overall connectivity status
     LivenessDeviceStatus status = 1;

@@ -44,8 +44,6 @@ message TamperTrait {
     vendor_id: 0x0000,
     version: 2
   };
-  // go/caspian-phoenix-retention
-  option (datapol.msg_retention) = {context: "caspian", desired_retention: RT_5_WEEKS};
 
   enum TamperState {
     /// Reserved for internal use; please do not use.
@@ -114,8 +112,6 @@ message TamperTrait {
         id: 1,
         event_importance: EVENT_IMPORTANCE_PRODUCTION_CRITICAL
     };
-    // go/caspian-phoenix-retention
-    option (datapol.msg_retention) = {context: "caspian", desired_retention: RT_HALF_A_YEAR};
 
     TamperState tamper_state = 1;
 
