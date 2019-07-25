@@ -86,8 +86,6 @@ message PincodeInputTrait {
       id: 1,
       event_importance: EVENT_IMPORTANCE_PRODUCTION_CRITICAL
     };
-    // go/caspian-phoenix-retention
-    option (datapol.msg_retention) = {context: "caspian", desired_retention: RT_2_YEARS};
 
     /**
      * Pincode enablement status
