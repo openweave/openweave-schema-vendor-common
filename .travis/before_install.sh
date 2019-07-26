@@ -22,14 +22,74 @@
 #      integration 'before_install' trigger of the 'install' step.
 #
 
+die()
+{
+    echo " *** ERROR: " ${*}
+    exit 1
+}
+
+#
+# installdeps <dependency tag>
+#
+# Abstraction for handling common dependency fulfillment across
+# different, but related, test targets.
+#
+installdeps()
+{
+    case "${1}" in
+
+        openweave-wdlc)
+            # Clone the latest commit of WDLC from Github.
+
+            cd ${HOME}
+            git clone https://github.com/openweave/openweave-wdlc.git
+            cd ${HOME}/openweave-wdlc
+
+            # First, satisfy any protobuf dependencies.
+
+            sudo contrib/download_protoc.sh
+
+            # Finally, configure and install wdlc itself.
+
+            ./configure && make && sudo make install
+ 
+
+            ;;
+        
+    esac
+}
+
 # Package build machine OS-specific configuration and setup
 
 case "${TRAVIS_OS_NAME}" in
 
     linux)
+        # Satisfy WDLC Python-specific dependencies.
+
+        sudo apt-get update
+        sudo apt-get install python2.7 python-pip python-virtualenv
+
+        # Install WDLC and any remaining depedencies.
+
+        installdeps "openweave-wdlc"
+
         ;;
 
     osx)
+        # Satisfy WDLC Python-specific dependencies.
+
+        easy_install pip virtualenv
+
+        # Install WDLC and any remaining depedencies.
+
+        installdeps "openweave-wdlc"
+
+        ;;
+
+
+    *)
+        die "Unknown OS name \"${TRAVIS_OS_NAME}\"."
+
         ;;
 
 esac
