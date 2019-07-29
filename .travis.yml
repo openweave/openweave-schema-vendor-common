@@ -25,6 +25,16 @@
 language: generic
 
 sudo: false
+
+# By default, Travis CI clones repositories with a fixed depth of 50
+# commits. Unfortunately, this defeats the 'make
+# check-validate-schema' target that works across branches, including
+# the 'master' branch. To avoid this, supress Travis CI's default
+# depth-limiting behavior.
+
+git:
+  - depth: false
+
 os:
   - linux
   - osx
