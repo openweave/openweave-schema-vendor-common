@@ -195,7 +195,7 @@ endef # path-relative-to-curdir
 # 
 define git-worktree-add
 @$(PROGRESS) "GIT WORKTREE" "ADD $(1) $(call path-relative-to-curdir,$(2))"
-$(VERBOSE)$(GIT) worktree add --quiet --force $(2) $(1)
+$(VERBOSE)$(GIT) worktree add --force $(2) $(1) 2>&1 > /dev/null
 endef # git-worktree-add
 
 #
