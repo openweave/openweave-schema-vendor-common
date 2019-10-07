@@ -25,7 +25,7 @@
 
 syntax = "proto3";
 
-package weave.trait.power;
+package weave.trait.actuator;
 
 import "google/protobuf/wrappers.proto";
 import "wdl/wdl_options.proto";
