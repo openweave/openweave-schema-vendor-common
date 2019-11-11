@@ -1,0 +1,106 @@
+/*
+ *
+ *    Copyright (c) 2019 Google LLC.
+ *    All rights reserved.
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
+
+/**
+ *    @file
+ *      This file specifies the basic open close installation state trait.
+ */
+
+syntax = "proto3";
+
+package weave.trait.sensor;
+
+import "wdl/wdl_options.proto";
+
+option java_outer_classname = "WeaveInternalBasicOpenCloseInstallationStateTrait";
+option objc_class_prefix = "SCM";
+
+/**
+ *  @brief
+ *    Basic Open Close Installation State Trait
+ *
+ *  A Weave Common service published trait that provides a means for an
+ *  application to facilitate setup and installation of a basic reed-switch
+ *  based open close sensor. This is achieved through a set of queryable
+ *  installation modes that an application can usher the device through by
+ *  setting them
+ */
+message BasicOpenCloseInstallationStateTrait {
+  option (wdl.message_type) = TRAIT;
+
+  option (wdl.trait) = {
+    stability: ALPHA,
+    vendor_id: 0x0000,
+    id:        0x1402,
+    version:   1
+  };
+
+  //  @brief
+  //    Modes during installation
+  enum InstallationMode {
+    // Unspecified status, default/initial value of this enum
+    INSTALLATION_MODE_UNSPECIFIED = 0;
+
+    // Idle: the device is in its normal operating mode where it isn't
+    // undergoing any kind of installation
+    INSTALLATION_MODE_IDLE = 1;
+
+    // Placement guidance: the device provides visual or other indications,
+    // such as lighting up, to assist the user with placement of the device
+    INSTALLATION_MODE_PLACEMENT_GUIDANCE = 2;
+
+    // Open close test: the device provides visual or other indications
+    // to assist the user with an open close test, and optionally,
+    // performs analysis/calibration during such test
+    INSTALLATION_MODE_OPEN_CLOSE_TEST = 3;
+  }
+
+  //  @brief
+  //    Open close test result Status
+  //
+  //  The current result of an open close test.
+  //
+  enum OpenCloseTestResult {
+    OPEN_CLOSE_TEST_RESULT_UNSPECIFIED = 0;
+    OPEN_CLOSE_TEST_RESULT_UNKNOWN = 1;
+    OPEN_CLOSE_TEST_RESULT_INVALID = 2;
+    OPEN_CLOSE_TEST_RESULT_VALID = 3;
+  }
+
+  // ---------- PROPERTIES ---------- //
+  option (wdl.properties) = { writable: READ_ONLY };
+  
+  // Which mode the device is currently on.
+  InstallationMode installation_mode = 1;
+
+  // The result of the open close test, only to be set by devices which
+  // support such testing.
+  OpenCloseTestResult open_close_test_result = 2 [(wdl.prop) = { optional: true}];
+
+  // ----------- COMMANDS ----------- //
+
+  message SetInstallationModeRequest {
+    option (wdl.message_type) = COMMAND;
+    option (wdl.command) = {
+      id: 0x01
+    };
+
+    // The installation mode to switch to.
+    InstallationMode installation_mode = 1;
+  }
+};
