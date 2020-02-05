@@ -1,0 +1,78 @@
+/*
+ *
+ *    Copyright (c) 2020 Google LLC.
+ *    Copyright (c) 2016-2018 Nest Labs, Inc.
+ *    All rights reserved.
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
+
+/**
+ *    @file
+ *      This file specifies a Weave Common trait that defines how
+ *      a Weave client request feedback from a device.  
+ */
+
+syntax = "proto3";
+
+package weave.trait.feedback;
+
+import "wdl/wdl_options.proto";
+import "google/protobuf/wrappers.proto";
+
+option java_outer_classname = "WeaveInternalFeedbackTrait";
+option objc_class_prefix = "SCM";
+
+/**
+ * This trait is used by the service to request feedback from a device.
+ * Feedback in that instance corresponds to on-device data used to
+ * debug/investigate issues (stack trace, memory dump, etc).
+ */
+message FeedbackTrait {
+  option (wdl.message_type) = TRAIT;
+  option (wdl.trait) = {
+    id: 0x0128,
+    vendor_id: COMMON,
+    version: 1,
+    stability: ALPHA
+  };
+
+  /**
+   * Command to initiate feedback routine on device
+   */
+  message FileFeedbackRequest {
+    option (wdl.message_type) = COMMAND;
+    option (wdl.command) = {
+      compatibility: {min_version: 1},
+      completion_event: "FileFeedbackResponse"
+      id: 0x01,
+    };
+
+    /// Unique identifier produced by initiator of the command to provide
+    /// tagging to other data emitted by the initiator.
+    google.protobuf.StringValue uuid = 1 [(wdl.prop) = { optional: true, nullable: true }];
+  };
+
+  /**
+   * The FileFeedbackResponse is sent by the device whenever the initiator 
+   * has successfully received the feedback report.
+   */
+  message FileFeedbackResponse {
+    option (wdl.message_type) = RESPONSE_EVENT;
+
+    /// Unique identifier produced by the device to map to the feedback
+    /// report previously created
+    google.protobuf.StringValue report_id = 1 [(wdl.prop) = { optional: true, nullable: true }];
+ };
+};
+
