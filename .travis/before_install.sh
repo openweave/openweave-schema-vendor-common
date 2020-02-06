@@ -47,7 +47,7 @@ installdeps()
 
             # First, satisfy any protobuf dependencies.
 
-            sudo contrib/download_protoc.sh
+            sudo contrib/download_protoc.sh --force
 
             # Finally, configure and install wdlc itself.
 
