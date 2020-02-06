@@ -47,7 +47,7 @@ installdeps()
 
             # First, satisfy any protobuf dependencies.
 
-            sudo contrib/download_protoc.sh
+            sudo contrib/download_protoc.sh --force
 
             # Finally, configure and install wdlc itself.
 
@@ -78,7 +78,13 @@ case "${TRAVIS_OS_NAME}" in
     osx)
         # Satisfy WDLC Python-specific dependencies.
 
-        easy_install pip virtualenv
+        easy_install pip
+
+        # Using easy_install to setup virtualenv for some reason gives Github the fits - it starts failing installing some
+        # of the dependent packages of virtualenv (zipp, see https://github.com/LibreTime/libretime/issues/952). Even putting
+        # that workaround in isn't sufficient, as other failures ensue. Using pip seems to be the more modern way of setting up
+        # virtualenv, so follow the masses if it ain't causing issues.
+        pip install virtualenv
 
         # Install WDLC and any remaining depedencies.
 
