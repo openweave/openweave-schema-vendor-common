@@ -67,35 +67,9 @@ message TelemetryWdmTrait {
     // last restart.
     uint32 subscription_attempt_count = 4;
 
-    // This field holds the timestamp of the last update failure.
-    google.protobuf.Timestamp last_update_failure_time = 5 [(wdl.param) = {
-      timestamp_constraints: { signed: true, precision: 0.001, width: 64 }
-    }];
-
-    // This field holds the timestamp of the last subscription failure.
-    google.protobuf.Timestamp last_subscription_failure_time = 6 [(wdl.param) = {
-      timestamp_constraints: { signed: true, precision: 0.001, width: 64 }
-    }];
-
-
-    // This field holds the error code of the last update failure.
-    int32 last_update_failure_reason = 7;
-
-    // This field holds the profile ID of the last update failure.
-    uint32 last_update_failure_profile = 8;
-
-    // This field holds the status code of the last update failure.
-    uint32 last_update_failure_status_code = 9;
-
-   // This field holds the error code of the last subscription failure.
-    int32 last_subscription_failure_reason = 10;
-
-    // Peer that update failed with
-    weave.common.ResourceId update_failure_peer = 11 [(wdl.prop) = {nullable: true}];
-
   }
 
-   // Events associated with WDM updates
+  // Events associated with WDM updates
   message TelemetryWdmUpdateFailureStatsEvent {
     option (wdl.message_type) = EVENT;
     option (wdl.event) = {
