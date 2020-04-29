@@ -137,7 +137,7 @@ message TelemetryWdmTrait {
    int32 last_subscription_failure_reason = 6;
 
    // Peer that update failed with
-   uint64_t last_update_failure_peer_id = 7;
+   uint64 last_update_failure_peer_id = 7;
 
    // Resource id of client
    weave.common.ResourceId last_update_failure_resource_id = 8 [(wdl.prop) = {nullable: true}];
