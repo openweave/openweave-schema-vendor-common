@@ -87,7 +87,7 @@ message TelemetryWdmTrait {
     uint32 update_failure_status_code = 3;
 
     // Peer that update failed with
-    weave.common.ResourceId update_failure_peer = 4 [(wdl.prop) = {nullable: true}];
+    weave.common.ResourceId update_failure_resource_id = 4 [(wdl.prop) = {nullable: true}];
 
     // This field holds the instance id of the trait from the failure
     uint32 update_failure_instance_id = 5;
@@ -137,7 +137,10 @@ message TelemetryWdmTrait {
    int32 last_subscription_failure_reason = 6;
 
    // Peer that update failed with
-   weave.common.ResourceId last_update_failure_peer = 7 [(wdl.prop) = {nullable: true}];
+   uint64_t last_update_failure_peer_id = 7;
+
+   // Resource id of client
+   weave.common.ResourceId last_update_failure_resource_id = 8 [(wdl.prop) = {nullable: true}];
 
 }
 
