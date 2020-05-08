@@ -64,7 +64,7 @@ message OnOffTrait {
     option (wdl.message_type) = EVENT;
     option (wdl.event) = {
       id: 1,
-      event_importance: EVENT_IMPORTANCE_PRODUCTION_CRITICAL
+      event_importance: EVENT_IMPORTANCE_PRODUCTION_STANDARD
     };
     bool is_on = 1;
   }
