@@ -58,4 +58,14 @@ message OnOffTrait {
     };
     bool is_on = 1;
   }
+
+  // ----------- EVENTS ----------- //
+  message OnOffChangeEvent {
+    option (wdl.message_type) = EVENT;
+    option (wdl.event) = {
+      id: 1,
+      event_importance: EVENT_IMPORTANCE_PRODUCTION_CRITICAL
+    };
+    bool is_on = 1;
+  }
 }
