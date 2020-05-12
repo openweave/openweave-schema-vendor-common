@@ -345,19 +345,6 @@ message RechargeableBatteryPowerSourceTrait {
          */
         bool                                                                   present            = 7;
 
-        // ----------- PROPERTIES ----------- //
-
-        option (wdl.properties) = {
-                writable: READ_ONLY,
-                variability: DYNAMIC,
-                extends: { 
-                    trait: "weave.trait.power.BatteryPowerSourceTrait"
-                },
-                extendable: true,
-                reserved_tag_min: 32,
-                reserved_tag_max: 47
-        };
-
         /**
          *  This optional property supports introspection of the
          *  device resource-internal assessment of when its
@@ -369,8 +356,8 @@ message RechargeableBatteryPowerSourceTrait {
          *  BATTERY_REPLACEMENT_INDICATOR_UNSPECIFIED.
          *
          */
-        BatteryReplacementIndicator  replacement_indicator  = 32 [(wdl.prop) = { optional: true,
-                                                                                 nullable: false }];
+        weave.trait.Power.BatteryPowerSourceTrait.BatteryReplacementIndicator  replacement_indicator  = 8 [(wdl.prop) = { optional: true,
+                                                                                                                          nullable: false }];
 
         /**
          *  This optional structured property represents the amount of
@@ -384,10 +371,23 @@ message RechargeableBatteryPowerSourceTrait {
          *  or providing all properties with all values set to NULL.
          *
          */
-        BatteryRemaining             remaining              = 33 [(wdl.prop) = { optional: true,
-                                                                                 nullable: true }];
+        BatteryRemaining             remaining              = 9 [(wdl.prop) = { optional: true,
+                                                                                nullable: true }];
 
-        BatteryChargingState         charging_state         = 34 [(wdl.prop) = { optional: true,
+        // ----------- PROPERTIES ----------- //
+
+        option (wdl.properties) = {
+                writable: READ_ONLY,
+                variability: DYNAMIC,
+                extends: {
+                    trait: "weave.trait.power.BatteryPowerSourceTrait"
+                },
+                extendable: true,
+                reserved_tag_min: 32,
+                reserved_tag_max: 47
+        };
+
+        BatteryChargingState         charging_state         = 10 [(wdl.prop) = { optional: true,
                                                                                  nullable: true }];
 
         // ----------- EVENTS ----------- //

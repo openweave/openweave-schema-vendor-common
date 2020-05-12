@@ -55,6 +55,7 @@ message BatteryPowerSourceTrait {
                 vendor_id: 0x0000,
                 id:        0x001C,
                 version:   1
+                extendable: true,
         };
 
         /**
