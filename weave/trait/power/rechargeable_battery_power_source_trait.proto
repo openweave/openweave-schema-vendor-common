@@ -34,6 +34,7 @@ import "wdl/wdl_options.proto";
 import "weave/common/time.proto";
 import "weave/trait/power/power_source_trait.proto";
 import "weave/trait/power/power_source_capabilities_trait.proto";
+import "weave/trait/power/battery_power_source_trait.proto";
 import "google/protobuf/wrappers.proto";
 
 option java_outer_classname = "WeaveInternalBatteryPowerSourceTrait";
