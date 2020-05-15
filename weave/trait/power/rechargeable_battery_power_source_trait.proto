@@ -391,16 +391,16 @@ message RechargeableBatteryPowerSourceTrait {
                                                                                  nullable: true }];
 
         // ----------- EVENTS ----------- //
-        message BatteryChangedEvent {
+        message RechargeableBatteryChangedEvent {
                 option (wdl.message_type) = EVENT;
 
                 option (wdl.event) = {
                     id: 1,
                     event_importance: EVENT_IMPORTANCE_PRODUCTION_STANDARD,
-                    extends: "weave.trait.power.PowerSourceTrait.PowerSourceChangedEvent",
+                    extends: "weave.trait.power.BatteryPowerSource.BatteryChangedEvent",
                     extendable: true,
-                    reserved_tag_min: 16,
-                    reserved_tag_max: 31
+                    reserved_tag_min: 32,
+                    reserved_tag_max: 33
                 };
 
                 // -------- SUPER PROPERTIES -------- //
@@ -443,7 +443,7 @@ message RechargeableBatteryPowerSourceTrait {
                  *  BATTERY_REPLACEMENT_INDICATOR_UNSPECIFIED.
                  *
                  */
-                weave.trait.power.BatteryPowerSourceTrait.BatteryReplacementIndicator  replacement_indicator  = 3;
+                weave.trait.power.BatteryPowerSourceTrait.BatteryReplacementIndicator  replacement_indicator  = 16;
 
                 /**
                  *  This optional structured property represents the amount of
@@ -457,7 +457,7 @@ message RechargeableBatteryPowerSourceTrait {
                  *  or providing all properties with all values set to NULL.
                  *
                  */
-                BatteryRemaining             remaining              = 4;
+                BatteryRemaining             remaining              = 17;
 
                 /**
                  *  This optional structured property represents the charging state
@@ -470,6 +470,6 @@ message RechargeableBatteryPowerSourceTrait {
                  *  or providing all properties with all values set to NULL.
                  *
                  */
-                BatteryChargingState         charge_state           = 5;
+                BatteryChargingState         charge_state           = 32;
         }
 }
