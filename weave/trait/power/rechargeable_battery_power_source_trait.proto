@@ -54,7 +54,7 @@ message RechargeableBatteryPowerSourceTrait {
         option (wdl.trait) = {
           stability: ALPHA,
                 vendor_id: 0x0000,
-                id:        0x001D,
+                id:        0x0023,
                 version:   1
         };
 
