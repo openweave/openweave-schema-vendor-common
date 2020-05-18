@@ -224,7 +224,7 @@ message RechargeableBatteryPowerSourceTrait {
                  *  provide one and the value is presently unknown.
                  */
                 BatteryChargeIndicator charge_indicator         = 5 [(wdl.prop) = { optional: true,
-                                                                                    nullable: true }];
+                                                                                    nullable: false }];
 
         }
 
@@ -371,8 +371,8 @@ message RechargeableBatteryPowerSourceTrait {
          *  or providing all properties with all values set to NULL.
          *
          */
-        BatteryRemaining             remaining              = 33 [(wdl.prop) = { optional: true,
-                                                                                 nullable: true }];
+        weave.trait.power.BatteryPowerSourceTrait.BatteryRemaining             remaining              = 33 [(wdl.prop) = { optional: true,
+                                                                                                                           nullable: true }];
 
         // ----------- PROPERTIES ----------- //
 
@@ -397,7 +397,7 @@ message RechargeableBatteryPowerSourceTrait {
                 option (wdl.event) = {
                     id: 1,
                     event_importance: EVENT_IMPORTANCE_PRODUCTION_STANDARD,
-                    extends: "weave.trait.power.BatteryPowerSource.BatteryChangedEvent",
+                    extends: "weave.trait.power.BatteryPowerSourceTrait.BatteryChangedEvent",
                     extendable: true,
                     reserved_tag_min: 32,
                     reserved_tag_max: 33
@@ -457,7 +457,7 @@ message RechargeableBatteryPowerSourceTrait {
                  *  or providing all properties with all values set to NULL.
                  *
                  */
-                BatteryRemaining             remaining              = 17;
+                weave.trait.power.BatteryPowerSourceTrait.BatteryRemaining             remaining              = 17;
 
                 /**
                  *  This optional structured property represents the charging state
