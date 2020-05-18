@@ -52,7 +52,7 @@ message PowerSourceCapabilitiesTrait {
           stability: PROD,
                 vendor_id: 0x0000,
                 id:        0x0018,
-                version:   1
+                version:   2
         };
 
         /**
