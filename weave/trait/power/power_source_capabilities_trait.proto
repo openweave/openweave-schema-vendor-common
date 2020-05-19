@@ -49,10 +49,10 @@ message PowerSourceCapabilitiesTrait {
         option (wdl.message_type) = TRAIT;
 
         option (wdl.trait) = {
-          stability: PROD,
+          stability: ALPHA,
                 vendor_id: 0x0000,
                 id:        0x0018,
-                version:   1
+                version:   2
         };
 
         /**
@@ -71,8 +71,13 @@ message PowerSourceCapabilitiesTrait {
                         reserved_tag_max: 31
                 };
 
-                POWER_SOURCE_TYPE_UNSPECIFIED         = 0;
-                POWER_SOURCE_TYPE_BATTERY             = 1;             ///< Battery (see the Battery Power Source trait)
+                POWER_SOURCE_TYPE_UNSPECIFIED          = 0;
+ 
+                ///< Battery (see the Battery Power Source trait)
+                POWER_SOURCE_TYPE_BATTERY              = 1;
+ 
+                ///< Rechargeable Battery (see the Rechargeable Battery Power Source trait)
+                POWER_SOURCE_TYPE_RECHARGEABLE_BATTERY = 2 [(wdl.enumvalue) = {compatibility: {min_version: 2}}];
         }
 
         /**

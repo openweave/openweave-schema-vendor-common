@@ -34,6 +34,7 @@ import "wdl/wdl_options.proto";
 import "weave/common/time.proto";
 import "weave/trait/power/power_source_trait.proto";
 import "weave/trait/power/power_source_capabilities_trait.proto";
+import "weave/trait/power/battery_power_source_trait.proto";
 import "google/protobuf/wrappers.proto";
 
 option java_outer_classname = "WeaveInternalBatteryPowerSourceTrait";
@@ -41,36 +42,35 @@ option objc_class_prefix = "SCM";
 
 /**
  *  @brief
- *    Battery Power Source
+ *    Rechargeable Battery Power Source
  *
  *  A Weave Common trait that allows vendors to enumerate dynamic, read-only
- *  basic properties about a battery power source in a device resource.
+ *  basic properties about a rechargeable battery power source in a device resource.
  *
  */
-message BatteryPowerSourceTrait {
+message RechargeableBatteryPowerSourceTrait {
         option (wdl.message_type) = TRAIT;
 
         option (wdl.trait) = {
-          stability: PROD,
+          stability: ALPHA,
                 vendor_id: 0x0000,
-                id:        0x001C,
+                id:        0x0023,
                 version:   1
-                extendable: true,
         };
 
         /**
          *  This enumeration represents the device resource-internal
-         *  assessment of when its battery/ies should be replaced.
+         *  assessment of when its battery/ies should be charged.
          */
-        enum BatteryReplacementIndicator {
+        enum BatteryChargeIndicator {
                 option (wdl.enumopts) = {
                         extendable: false
                 };
 
-                BATTERY_REPLACEMENT_INDICATOR_UNSPECIFIED          =  0;                         ///< The replacement indicator is unspecified or unknown.
-                BATTERY_REPLACEMENT_INDICATOR_NOT_AT_ALL           =  1;                         ///< The battery/ies are fine and do not require replacement.
-                BATTERY_REPLACEMENT_INDICATOR_SOON                 =  2;                         ///< The device resource using the battery/ies is apt to be fine for a little while longer. Battery/ies should be purchased now. Replace the battery/ies when the new battery/ies are received.
-                BATTERY_REPLACEMENT_INDICATOR_IMMEDIATELY          =  3;                         ///< The device resource using the battery/ies is about to shut off. The battery/ies should be replaced immediately.
+                BATTERY_CHARGE_INDICATOR_UNSPECIFIED          =  0;                         ///< The charge indicator is unspecified or unknown.
+                BATTERY_CHARGE_INDICATOR_FULL                 =  1;                         ///< The battery/ies are full and do not require charging.
+                BATTERY_CHARGE_INDICATOR_LOW                  =  2;                         ///< The battery/ies should be charged soon.
+                BATTERY_CHARGE_INDICATOR_CRITICAL             =  3;                         ///< The battery/ies should be charged immediately.
         }
 
         /**
@@ -126,8 +126,109 @@ message BatteryPowerSourceTrait {
                                                                                     nullable: true }];
         }
 
-        // -------- SUPER PROPERTIES -------- //
 
+        /**
+         *  This property is a structured property representing the charging state
+         *  of the battery. 
+         */
+        message BatteryChargingState {
+                option (wdl.message_type) = STRUCT;
+                option (wdl.structopts)   = {
+                        extendable: false
+                };
+
+                /**
+                 *  This property is an optional property representing the
+                 *  device charging state.
+                 *
+                 *  Absence of this property implies that this device
+                 *  resource does not make any assessment of whether or not it is charging
+                 *  and the value is unknown. A NULL value implies that the device may
+                 *  make an assessment of the charging state of the
+                 *  battery source; however, is unable to transiently
+                 *  provide one and the value is presently unknown.
+                 *
+                 */
+                 google.protobuf.BoolValue is_charging = 1 [(wdl.prop) = { optional: true,
+                                                                           nullable: true }];
+
+                /**
+                 *  This property is an optional property representing the
+                 *  amount of time it would take to fully charge the battery 
+                 *
+                 *  Absence of this property implies that this device
+                 *  resource does not make any assessment of the time
+                 *  and the value is unknown. A NULL value implies that the device may
+                 *  make an assessment of the time remaining for a
+                 *  battery source; however, is unable to transiently
+                 *  provide one and the value is presently unknown.
+                 *
+                 */
+                 weave.common.Timer time_to_full                = 2 [(wdl.prop) = { optional: true,
+                                                                                    nullable: true }];
+
+                 
+                /**
+                 *  This optional property is to indicate either a measured or
+                 *  estimated value of the instantaneous current charging the
+                 *  battery.
+                 *
+                 *  A measurement may be made with any number of metrology
+                 *  techniques. However, the value may also be estimated based
+                 *  on system operating states.
+                 *
+                 *  Absence of this property implies that this device resource
+                 *  does not make any assessment of current and the value is
+                 *  unknown. A NULL value implies that the device may make an
+                 *  assessment of current; however, is unable to transiently
+                 *  provide one and the value is presently unknown.
+                 *
+                 */
+                 google.protobuf.FloatValue assessed_charging_current    = 3 [(wdl.prop) = { optional: true,
+                                                                                             nullable: true,
+                                                                                             quantity_type: CURRENT,
+                                                                                             number_constraints: { min: 0.0, max: 1000.0,
+                                                                                                                   precision: 0.001,
+                                                                                                                   fixed_encoding_width: 32 }},
+                                                                                           (wdl.tlv)  = { encoding: FIXED } ];
+
+                /**
+                 *  This property is an optional property determining if the
+                 *  device is currently in battery protection mode. This mode is usually
+                 *  triggered when the device is left charging for an extended
+                 *  period of time. In this mode, the battery is purposfully
+                 *  discharged to try to preserve its health.
+                 *
+                 *  Absence of this property implies that this device
+                 *  resource does not make any assessment of whether or not it is in
+                 *  protection mode.
+                 *  
+                 *  A NULL value implies that the device may
+                 *  make an assessment, however, is unable to transiently
+                 *  provide one and the value is presently unknown.
+                 *
+                 */
+                 google.protobuf.BoolValue protection_mode_enabled = 4 [(wdl.prop) = { optional: true,
+                                                                                       nullable: true }];
+
+                /**
+                 *  This property is an optional property representing the
+                 *  device resource-internal assessment of when the battery
+                 *  should be charged.
+                 *
+                 *  Absence of this property implies that this device
+                 *  resource does not make any assessment of whether or not
+                 *  the battery should be charged. A NULL value implies that 
+                 *  the device may make an assessment of the charge for a
+                 *  battery source; however, is unable to transiently
+                 *  provide one and the value is presently unknown.
+                 */
+                BatteryChargeIndicator charge_indicator         = 5 [(wdl.prop) = { optional: true,
+                                                                                    nullable: false }];
+
+        }
+
+        // -------- SUPER PROPERTIES -------- //
 
          /**
          *  This is a required property representing an indication of
@@ -244,19 +345,6 @@ message BatteryPowerSourceTrait {
          */
         bool                                                                   present            = 7;
 
-        // ----------- PROPERTIES ----------- //
-
-        option (wdl.properties) = {
-                writable: READ_ONLY,
-                variability: DYNAMIC,
-                extends: { 
-                    trait: "weave.trait.power.PowerSourceTrait"
-                },
-                extendable: true,
-                reserved_tag_min: 32,
-                reserved_tag_max: 47
-        };
-
         /**
          *  This optional property supports introspection of the
          *  device resource-internal assessment of when its
@@ -268,8 +356,8 @@ message BatteryPowerSourceTrait {
          *  BATTERY_REPLACEMENT_INDICATOR_UNSPECIFIED.
          *
          */
-        BatteryReplacementIndicator  replacement_indicator  = 32 [(wdl.prop) = { optional: true,
-                                                                                 nullable: false }];
+        weave.trait.power.BatteryPowerSourceTrait.BatteryReplacementIndicator  replacement_indicator  = 32 [(wdl.prop) = { optional: true,
+                                                                                                                           nullable: false }];
 
         /**
          *  This optional structured property represents the amount of
@@ -283,20 +371,36 @@ message BatteryPowerSourceTrait {
          *  or providing all properties with all values set to NULL.
          *
          */
-        BatteryRemaining             remaining              = 33 [(wdl.prop) = { optional: true,
+        weave.trait.power.BatteryPowerSourceTrait.BatteryRemaining             remaining              = 33 [(wdl.prop) = { optional: true,
+                                                                                                                           nullable: true }];
+
+        // ----------- PROPERTIES ----------- //
+
+        option (wdl.properties) = {
+                writable: READ_ONLY,
+                variability: DYNAMIC,
+                extends: {
+                    trait: "weave.trait.power.BatteryPowerSourceTrait"
+                },
+                extendable: true,
+                reserved_tag_min: 48,
+                reserved_tag_max: 49
+        };
+
+        BatteryChargingState         charging_state         = 48 [(wdl.prop) = { optional: true,
                                                                                  nullable: true }];
 
         // ----------- EVENTS ----------- //
-        message BatteryChangedEvent {
+        message RechargeableBatteryChangedEvent {
                 option (wdl.message_type) = EVENT;
 
                 option (wdl.event) = {
                     id: 1,
                     event_importance: EVENT_IMPORTANCE_PRODUCTION_STANDARD,
-                    extends: "weave.trait.power.PowerSourceTrait.PowerSourceChangedEvent",
+                    extends: "weave.trait.power.BatteryPowerSourceTrait.BatteryChangedEvent",
                     extendable: true,
-                    reserved_tag_min: 16,
-                    reserved_tag_max: 31
+                    reserved_tag_min: 32,
+                    reserved_tag_max: 33
                 };
 
                 // -------- SUPER PROPERTIES -------- //
@@ -339,7 +443,8 @@ message BatteryPowerSourceTrait {
                  *  BATTERY_REPLACEMENT_INDICATOR_UNSPECIFIED.
                  *
                  */
-                BatteryReplacementIndicator  replacement_indicator  = 16;
+                weave.trait.power.BatteryPowerSourceTrait.BatteryReplacementIndicator  replacement_indicator  = 16;
+
                 /**
                  *  This optional structured property represents the amount of
                  *  electric charge or energy remaining in a battery power
@@ -352,6 +457,19 @@ message BatteryPowerSourceTrait {
                  *  or providing all properties with all values set to NULL.
                  *
                  */
-                BatteryRemaining             remaining              = 17;
+                weave.trait.power.BatteryPowerSourceTrait.BatteryRemaining             remaining              = 17;
+
+                /**
+                 *  This optional structured property represents the charging state
+                 *  of a rechargeable battery.
+                 *
+                 *  Absence of this property or a NULL value imply that the
+                 *  device resource has provided assessment of energy
+                 *  remaining in a battery power source and is equivalent to
+                 *  providing an empty structure with no containing properties
+                 *  or providing all properties with all values set to NULL.
+                 *
+                 */
+                BatteryChargingState         charge_state           = 32;
         }
 }
