@@ -37,7 +37,7 @@ import "weave/trait/power/power_source_capabilities_trait.proto";
 import "weave/trait/power/battery_power_source_trait.proto";
 import "google/protobuf/wrappers.proto";
 
-option java_outer_classname = "WeaveInternalBatteryPowerSourceTrait";
+option java_outer_classname = "WeaveInternalRechargeableBatteryPowerSourceTrait";
 option objc_class_prefix = "SCM";
 
 /**
