@@ -153,27 +153,27 @@ message LivenessTrait {
 
   /// The name of the publishing entity which observes and concludes this
   /// liveness trait state. Such a publisher can be a service or a device.
-  google.protobuf.StringValue publisher_name = 10 [(wdl.prop) = {nullable: true, compatibility: {min_version: 3}}];
+  google.protobuf.StringValue publisher_name = 10 [(wdl.prop) = {nullable: true, compatibility: {min_version: 6}}];
 
   /// Identifying if tunnel connection with device is currently lost.
   /// Unset if tunnel connection info is not used for determining the overall liveness status.
-  google.protobuf.BoolValue tunnel_disconnected = 11 [(wdl.prop) = {nullable: true, compatibility: {min_version: 4}}];
+  google.protobuf.BoolValue tunnel_disconnected = 11 [(wdl.prop) = {nullable: true, compatibility: {min_version: 6}}];
 
   /// Last time the tunnel_disconnected attribute was changed.
   /// Unset if tunnel connection info is not used for determining the overall liveness status.
-  google.protobuf.Timestamp tunnel_disconnected_time_status_changed = 12 [(wdl.prop) = {nullable: true, compatibility: {min_version: 4}}];
+  google.protobuf.Timestamp tunnel_disconnected_time_status_changed = 12 [(wdl.prop) = {nullable: true, compatibility: {min_version: 6}}];
 
   /// When device becomes UNREACHABLE, this is set to the last time the device
   /// had contact with the service. This value typically precedes the time when
   /// state changes, as those flips include TTL timeout padding. This value is
   /// unset if the subject device is currently online.
-  google.protobuf.Timestamp last_contacted_time = 13 [(wdl.prop) = {nullable: true, compatibility: {min_version: 5}}];
+  google.protobuf.Timestamp last_contacted_time = 13 [(wdl.prop) = {nullable: true, compatibility: {min_version: 6}}];
 
   /// Given that a device is flipped to UNREACHABLE state because of its lack of
   /// WDM heartbeats, this records the time when its last WDM heartbeat-like
   /// message was received by the observing party. This value is unset if the
   /// subject device liveness TTL has not expired yet.
-  google.protobuf.Timestamp last_wdm_heartbeat_time = 14 [(wdl.prop) = {nullable: true, compatibility: {min_version: 5}}];
+  google.protobuf.Timestamp last_wdm_heartbeat_time = 14 [(wdl.prop) = {nullable: true, compatibility: {min_version: 6}}];
 
   /// Given that 'tunnel_disconnected' attribute is of value 'true', causing
   /// the subject device to be in UNREACHABLE state, this attribute has the
@@ -184,7 +184,7 @@ message LivenessTrait {
   /// This value is unset if the subject device does not use tunnel-connection-
   /// based liveness feature, or its 'tunnel_disconnected' attribute has value
   /// 'false' or is unset.
-  google.protobuf.Timestamp tunnel_closed_time = 15 [(wdl.prop) = {nullable: true, compatibility: {min_version: 5}}];
+  google.protobuf.Timestamp tunnel_closed_time = 15 [(wdl.prop) = {nullable: true, compatibility: {min_version: 6}}];
 
   // ----------- EVENTS ----------- //
   message LivenessChangeEvent {
@@ -211,19 +211,19 @@ message LivenessTrait {
     /// The last overall connectivity status, to facilitate event consumers which would like to perform de-duping,
     /// e.g., Hermes could use this info to drop the second event of two consecutive 'unreachable' ones
     LivenessDeviceStatus prev_status = 5 [(wdl.prop) = {compatibility: {min_version: 2}}];
-    
+
     /// Identifying if tunnel connection with device is currently lost.
     /// Unset if tunnel connection info is not used for determining the overall liveness status.
-    google.protobuf.BoolValue tunnel_disconnected = 6 [(wdl.prop) = {nullable: true, compatibility: {min_version: 4}}];
+    google.protobuf.BoolValue tunnel_disconnected = 6 [(wdl.prop) = {nullable: true, compatibility: {min_version: 6}}];
 
     /// See the same-named trait property.
-    google.protobuf.Timestamp last_contacted_time = 7 [(wdl.prop) = {nullable: true, compatibility: {min_version: 5}}];
+    google.protobuf.Timestamp last_contacted_time = 7 [(wdl.prop) = {nullable: true, compatibility: {min_version: 6}}];
 
     /// See the same-named trait property.
-    google.protobuf.Timestamp last_wdm_heartbeat_time = 8 [(wdl.prop) = {nullable: true, compatibility: {min_version: 5}}];
+    google.protobuf.Timestamp last_wdm_heartbeat_time = 8 [(wdl.prop) = {nullable: true, compatibility: {min_version: 6}}];
 
     /// See the same-named trait property.
-    google.protobuf.Timestamp tunnel_closed_time = 9 [(wdl.prop) = {nullable: true, compatibility: {min_version: 5}}];
+    google.protobuf.Timestamp tunnel_closed_time = 9 [(wdl.prop) = {nullable: true, compatibility: {min_version: 6}}];
 
     /// Last time 'status' was changed.
     google.protobuf.Timestamp time_status_changed = 10 [(wdl.prop) = {compatibility: {min_version: 6}}];
