@@ -40,7 +40,7 @@ option objc_class_prefix = "SCM";
 message ClockFormatSettingsTrait {
     option (wdl.message_type) = TRAIT;
     option (wdl.trait) = {
-        stability: ALPHA,
+        stability: BETA,
         id: 0x1102,
         vendor_id: 0x0000,
         version: 1
