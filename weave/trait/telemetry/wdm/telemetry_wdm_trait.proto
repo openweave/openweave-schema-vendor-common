@@ -1,0 +1,146 @@
+//
+//    Copyright (c) 2020, Google LLC, Apache license.
+//    All rights reserved.
+//
+//    This document is the property of Google. It is considered
+//    confidential and proprietary information.
+//
+//    This document may not be reproduced or transmitted in any form,
+//    in whole or in part, without the express written permission of
+//    Nest.
+//
+
+//    @file
+//      This file specifies a WDM Telemetry trait that specifies the
+//      various telemetry counters that are associated with WDM
+
+syntax = "proto3";
+
+package weave.trait.telemetry.wdm;
+
+import "wdl/wdl_options.proto";
+import "google/protobuf/timestamp.proto";
+import "weave/common/identifiers.proto";
+
+option java_outer_classname = "WeaveInternalTelemetryWdmTrait";
+option objc_class_prefix = "SCM";
+
+//  @brief
+//    TelemetryWdmTrait
+//
+//  A telemetry trait for the WDM that specifies various counters
+//  associated with WDM updates and subscriptions.
+//
+message TelemetryWdmTrait {
+  option (wdl.message_type) = TRAIT;
+  option (wdl.trait) = {
+    stability: ALPHA,
+    id: 0x1781,
+    vendor_id: 0x0000,
+    version: 1
+  };
+  option (wdl.properties) = {
+    writable: READ_ONLY,
+  };
+
+  // Events associated with WDM updates
+  message TelemetryWdmCountStatsEvent {
+    option (wdl.message_type) = EVENT;
+    option (wdl.event) = {
+      id: 1
+      event_importance: EVENT_IMPORTANCE_DEBUG
+    };
+
+    // This field holds the count of successful updates since the
+    // last restart.
+    uint32 successful_updates_count = 1;
+
+    // This field holds the count of unsuccessful updates since the
+    // last restart.
+    uint32 unsuccessful_updates_count = 2;
+
+    // This field holds the count of successful subscriptions since the
+    // last restart.
+    uint32 successful_subscriptions_count = 3;
+
+    // This field holds the count of subscription attempts since the
+    // last restart.
+    uint32 subscription_attempt_count = 4;
+
+  }
+
+  // Events associated with WDM updates
+  message TelemetryWdmUpdateFailureStatsEvent {
+    option (wdl.message_type) = EVENT;
+    option (wdl.event) = {
+      id: 2
+      event_importance: EVENT_IMPORTANCE_DEBUG
+    };
+
+    // This field holds the error code of the update failure.
+    int32 update_failure_reason = 1;
+
+    // This field holds the profile ID of the update failure.
+    uint32 update_failure_profile = 2;
+
+    // This field holds the status code of the update failure.
+    uint32 update_failure_status_code = 3;
+
+    // Peer that update failed with
+    weave.common.ResourceId update_failure_resource_id = 4 [(wdl.prop) = {nullable: true}];
+
+    // This field holds the instance id of the trait from the failure
+    uint32 update_failure_instance_id = 5;
+
+    // This field holds the trait id of the trait from the failure
+    uint32 update_failure_trait_id = 6;
+
+    // This field holds the peer id of the update request
+    uint64 update_failure_peer_id = 7;
+
+  }
+
+  // Events associated with WDM updates
+  message TelemetryWdmSubscriptionFailureStatsEvent {
+    option (wdl.message_type) = EVENT;
+    option (wdl.event) = {
+      id: 3
+      event_importance: EVENT_IMPORTANCE_DEBUG
+    };
+
+    // This field holds the error code of the subscription failure.
+    int32 subscription_failure_reason = 1;
+
+  }
+
+
+   // This field holds the timestamp of the last update failure.
+   google.protobuf.Timestamp last_update_failure_time = 1 [(wdl.param) = {
+     timestamp_constraints: { signed: true, precision: 0.001, width: 64 }
+   }];
+
+   // This field holds the timestamp of the last subscription failure.
+   google.protobuf.Timestamp last_subscription_failure_time = 2 [(wdl.param) = {
+     timestamp_constraints: { signed: true, precision: 0.001, width: 64 }
+   }];
+
+   // This field holds the error code of the last update failure.
+   int32 last_update_failure_reason = 3;
+
+   // This field holds the profile ID of the last update failure.
+   uint32 last_update_failure_profile = 4;
+
+   // This field holds the status code of the last update failure.
+   uint32 last_update_failure_status_code = 5;
+
+   // This field holds the error code of the last subscription failure.
+   int32 last_subscription_failure_reason = 6;
+
+   // Peer that update failed with
+   uint64 last_update_failure_peer_id = 7;
+
+   // Resource id of client
+   weave.common.ResourceId last_update_failure_resource_id = 8 [(wdl.prop) = {nullable: true}];
+
+}
+
