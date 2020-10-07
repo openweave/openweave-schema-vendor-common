@@ -187,5 +187,30 @@ message PowerSourcesTrait {
          *
          */
         repeated uint32                                      active_sources = 4;
+
+        // ----------- EVENTS ----------- //
+        message ActiveSourcesChangedEvent {
+                option (wdl.message_type) = EVENT;
+
+                option (wdl.event) = {
+                    id: 1,
+                    event_importance: EVENT_IMPORTANCE_PRODUCTION_STANDARD,
+                    reserved_tag_min: 1,
+                    reserved_tag_max: 3
+                };
+
+                /**
+                 * This field conveys the new set of active sources that
+                 * were made active at the time this event was emitted.
+                 * This tracks the active_sources property mentioned above
+                 */
+                repeated uint32 active_sources = 1;
+
+                /**
+                 * This field conveys the previous set of active sources that
+                 * were active before this event was emitted.
+                 */
+                repeated uint32 previous_active_sources = 2;
+        }
 }
 

@@ -37,7 +37,7 @@ import "weave/trait/power/power_source_capabilities_trait.proto";
 import "weave/trait/power/battery_power_source_trait.proto";
 import "google/protobuf/wrappers.proto";
 
-option java_outer_classname = "WeaveInternalBatteryPowerSourceTrait";
+option java_outer_classname = "WeaveInternalRechargeableBatteryPowerSourceTrait";
 option objc_class_prefix = "SCM";
 
 /**
@@ -71,6 +71,39 @@ message RechargeableBatteryPowerSourceTrait {
                 BATTERY_CHARGE_INDICATOR_FULL                 =  1;                         ///< The battery/ies are full and do not require charging.
                 BATTERY_CHARGE_INDICATOR_LOW                  =  2;                         ///< The battery/ies should be charged soon.
                 BATTERY_CHARGE_INDICATOR_CRITICAL             =  3;                         ///< The battery/ies should be charged immediately.
+        }
+
+        /**
+         *  This enumeration represents the device resource-internal
+         *  assessment of whether the charger power is limiting the
+         *  battery charge rate.
+         */
+        enum BatteryChargerChargeRateLimitation {
+                option (wdl.enumopts) = {
+                        extendable: false
+                };
+
+                BATTERY_CHARGER_CHARGE_RATE_LIMITATION_UNSPECIFIED               =  0;                         ///< The charge rate is unspecified or unknown.
+                BATTERY_CHARGER_CHARGE_RATE_LIMITATION_NOT_LIMITED               =  1;                         ///< The battery charge rate is not limited by the charger.
+                BATTERY_CHARGER_CHARGE_RATE_LIMITATION_LIMITED                   =  2;                         ///< The battery charge rate is limited by the charger.
+        }
+
+        /**
+         *  This enumeration represents the device resource-internal
+         *  assessment of whether its battery/ies' charging rate is limited
+         *  by temperature.
+         */
+        enum BatteryTemperatureChargeRateLimitation {
+                option (wdl.enumopts) = {
+                        extendable: false
+                };
+
+                BATTERY_TEMPERATURE_CHARGE_RATE_LIMITATION_UNSPECIFIED   = 0;                ///< The temperature charge rate limitation is unspecified or unknown.
+                BATTERY_TEMPERATURE_CHARGE_RATE_LIMITATION_NOT_LIMITED   = 1;                ///< There is no temperature charge rate limitation.
+                BATTERY_TEMPERATURE_CHARGE_RATE_LIMITATION_SLOW_WARM     = 2;                ///< The battery is charging slowly because it is too warm.
+                BATTERY_TEMPERATURE_CHARGE_RATE_LIMITATION_STOPPED_HOT   = 3;                ///< The battery has stopped charging because it is too hot.
+                BATTERY_TEMPERATURE_CHARGE_RATE_LIMITATION_SLOW_COOL     = 4;                ///< The battery is charging slowly because it is too cold.
+                BATTERY_TEMPERATURE_CHARGE_RATE_LIMITATION_STOPPED_COLD  = 5;                ///< The battery has stopped charging because it is too cold.
         }
 
         /**
@@ -225,6 +258,36 @@ message RechargeableBatteryPowerSourceTrait {
                  */
                 BatteryChargeIndicator charge_indicator         = 5 [(wdl.prop) = { optional: true,
                                                                                     nullable: false }];
+
+                /**
+                 *  The following two properties indicate whether the charge
+                 *  rate is limited by either the charger or by the temperature.
+                 *  The battery can charge at full speed only if both
+                 *  properties are set to their respective NOT_LIMITED value.
+                 */
+
+                /**
+                 *  This property is an optional property representing the
+                 *  device resource-internal assessment of whether the
+                 *  charger power is limiting the battery charge rate.
+                 *
+                 *  Absence of this property implies that this device
+                 *  resource does not make any assessment of whether or not
+                 *  the charger is limiting charge rate.
+                 */
+                BatteryChargerChargeRateLimitation charger_charge_rate_limitation       = 6 [(wdl.prop) = { optional: true,
+                                                                                                            nullable: false }];
+                /**
+                 *  This property is an optional property representing the
+                 *  device resource-internal assessment of whether the
+                 *  temperature is affecting the battery/ies' charge rate.
+                 *
+                 *  Absence of this property implies that this device
+                 *  resource does not make any assessment of whether or not
+                 *  the temperature is affecting the battery/ies' charge rate.
+                 */
+                BatteryTemperatureChargeRateLimitation temperature_charge_rate_limitation       = 7 [(wdl.prop) = { optional: true,
+                                                                                                                    nullable: false }];
 
         }
 
