@@ -257,7 +257,7 @@ message RechargeableBatteryPowerSourceTrait {
                  *  provide one and the value is presently unknown.
                  */
                 BatteryChargeIndicator charge_indicator         = 5 [(wdl.prop) = { optional: true,
-                                                                                    nullable: false }];
+                                                                                    nullable: true }];
 
                 /**
                  *  The following two properties indicate whether the charge
@@ -276,7 +276,7 @@ message RechargeableBatteryPowerSourceTrait {
                  *  the charger is limiting charge rate.
                  */
                 BatteryChargerChargeRateLimitation charger_charge_rate_limitation       = 6 [(wdl.prop) = { optional: true,
-                                                                                                            nullable: false }];
+                                                                                                            nullable: true }];
                 /**
                  *  This property is an optional property representing the
                  *  device resource-internal assessment of whether the
@@ -287,7 +287,7 @@ message RechargeableBatteryPowerSourceTrait {
                  *  the temperature is affecting the battery/ies' charge rate.
                  */
                 BatteryTemperatureChargeRateLimitation temperature_charge_rate_limitation       = 7 [(wdl.prop) = { optional: true,
-                                                                                                                    nullable: false }];
+                                                                                                                    nullable: true }];
 
         }
 
